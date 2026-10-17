@@ -1,0 +1,117 @@
+<section class="detail-page">
+  <a class="back-link" routerLink="/products">
+    <span aria-hidden="true">←</span>
+    Back to the collection
+  </a>
+
+  @if (isLoading) {
+    <section class="detail-state" role="status">
+      <span class="loading-mark" aria-hidden="true"></span>
+      <p>Loading product details...</p>
+    </section>
+  } @else if (errorMessage) {
+    <section class="detail-state state-error" role="alert">
+      <p class="eyebrow">PRODUCT UNAVAILABLE</p>
+      <h1>We could not find that product.</h1>
+      <p>{{ errorMessage }}</p>
+      <a class="return-link" routerLink="/products">Browse all products</a>
+    </section>
+  } @else if (product) {
+    <div class="detail-layout">
+      <section class="product-gallery" aria-label="Product photo gallery">
+        <div class="gallery-stage">
+          @if (imageUrls.length > 0) {
+            <img
+              class="main-image"
+              [src]="imageUrls[activeImageIndex]"
+              [alt]="product.name + ' photo ' + (activeImageIndex + 1)"
+            >
+            @if (imageUrls.length > 1) {
+              <div class="gallery-controls">
+                <button
+                  type="button"
+                  class="gallery-arrow"
+                  aria-label="Show previous photo"
+                  (click)="showPreviousImage()"
+                >
+                  ←
+                </button>
+                <span>{{ activeImageIndex + 1 }} / {{ imageUrls.length }}</span>
+                <button
+                  type="button"
+                  class="gallery-arrow"
+                  aria-label="Show next photo"
+                  (click)="showNextImage()"
+                >
+                  →
+                </button>
+              </div>
+            }
+          } @else {
+            <div class="gallery-placeholder" aria-label="No product photos">
+              <span>{{ product.name.slice(0, 1) }}</span>
+              <p>Images coming soon</p>
+            </div>
+          }
+        </div>
+
+        @if (imageUrls.length > 1) {
+          <div class="thumbnail-list" aria-label="Choose a product photo">
+            @for (imageUrl of imageUrls; track imageUrl; let index = $index) {
+              <button
+                type="button"
+                class="thumbnail-button"
+                [class.active]="activeImageIndex === index"
+                [attr.aria-label]="'View photo ' + (index + 1)"
+                [attr.aria-pressed]="activeImageIndex === index"
+                (click)="selectImage(index)"
+              >
+                <img [src]="imageUrl" [alt]="product.name + ' thumbnail ' + (index + 1)">
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="product-information">
+        <p class="eyebrow">THE OPEN MARKET <span> / </span> PRODUCT DETAILS</p>
+        <h1>{{ product.name }}</h1>
+
+        <div class="price-line">
+          <strong>{{ product.price }}</strong>
+          @if (product.quantity > 0) {
+            <span class="availability">Available</span>
+          } @else {
+            <span class="availability unavailable">Sold out</span>
+          }
+        </div>
+
+        <div class="detail-divider"></div>
+
+        <div class="description-block">
+          <h2>About this product</h2>
+          @if (product.description) {
+            <p>{{ product.description }}</p>
+          } @else {
+            <p class="description-empty">
+              The seller has not added a description yet.
+            </p>
+          }
+        </div>
+
+        <div class="stock-note">
+          <span class="stock-icon" aria-hidden="true">○</span>
+          @if (product.quantity > 0) {
+            <p>{{ product.quantity }} available from the seller</p>
+          } @else {
+            <p>This product is currently out of stock.</p>
+          }
+        </div>
+
+        <p class="seller-note">
+          Listed by an independent seller on the Buy marketplace.
+        </p>
+      </section>
+    </div>
+  }
+</section>

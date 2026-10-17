@@ -1,0 +1,59 @@
+<section class="auth-page">
+  <div class="auth-card">
+    <h1>Sign in</h1>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label for="email">Email</label>
+      <input
+        id="email"
+        type="email"
+        formControlName="email"
+        required
+        [class.invalid]="form.controls.email.invalid && (form.controls.email.dirty || form.controls.email.touched)"
+        [attr.aria-invalid]="form.controls.email.invalid && (form.controls.email.dirty || form.controls.email.touched)"
+      >
+
+      @if (form.controls.email.invalid && (form.controls.email.dirty || form.controls.email.touched)) {
+        <p id="email-error" class="field-error" role="alert">
+          @if (form.controls.email.hasError('required')) {
+            Enter your email address.
+          } @else {
+            Enter a valid email address.
+          }
+        </p>
+      }
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        formControlName="password"
+        required
+        [class.invalid]="form.controls.password.invalid && (form.controls.password.dirty || form.controls.password.touched)"
+        [attr.aria-invalid]="form.controls.password.invalid && (form.controls.password.dirty || form.controls.password.touched)"
+      >
+
+      @if (form.controls.password.invalid && (form.controls.password.dirty || form.controls.password.touched)) {
+        <p id="password-error" class="field-error" role="alert">
+          Enter your password.
+        </p>
+      }
+
+      @if (errorMessage) {
+        <p class="form-message" role="alert">{{ errorMessage }}</p>
+      }
+
+      <button type="submit" [disabled]="isSubmitting">
+        @if (isSubmitting) {
+          <span>Signing in...</span>
+        } @else {
+          <span>Sign in</span>
+        }
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Create an account <a routerLink="/register">here</a>
+    </p>
+  </div>
+</section>

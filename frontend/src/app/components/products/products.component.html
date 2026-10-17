@@ -1,0 +1,130 @@
+<section class="shop-page">
+  <header class="shop-hero">
+    <div class="hero-copy">
+      <p class="eyebrow">THE OPEN MARKET</p>
+      <h1>Discover something <span>worth keeping.</span></h1>
+      <p class="hero-description">
+        Explore products from independent sellers and find a new favorite.
+      </p>
+      <a class="hero-link" href="#product-grid">
+        Explore the collection
+        <span aria-hidden="true">↘</span>
+      </a>
+    </div>
+
+    <div class="hero-art" aria-hidden="true">
+      <div class="art-orbit"></div>
+      <div class="art-block art-block-coral"></div>
+      <div class="art-block art-block-blue"></div>
+      <div class="art-label">
+        <span>INDEPENDENT</span>
+        <strong>FINDS</strong>
+        <small>01 — 05</small>
+      </div>
+    </div>
+  </header>
+
+  <div class="collection-heading" id="product-grid">
+    <div>
+      <p class="eyebrow">CURATED BY OUR COMMUNITY</p>
+      <h2>Shop all products</h2>
+    </div>
+    @if (!isLoading && !hasError) {
+      <p class="item-count">
+        <span>{{ products.length }}</span>
+        @if (products.length === 1) {
+          <span>product</span>
+        } @else {
+          <span>products</span>
+        }
+      </p>
+    }
+  </div>
+
+  @if (isLoading) {
+    <section class="catalog-state" role="status">
+      <span class="loading-mark" aria-hidden="true"></span>
+      <p>Gathering the collection...</p>
+    </section>
+  } @else if (hasError) {
+    <section class="catalog-state state-error" role="alert">
+      <p class="eyebrow">A MOMENT, PLEASE</p>
+      <h2>The collection is taking a break.</h2>
+      <p>We could not load the products. Please try again.</p>
+      <button type="button" class="text-button" (click)="loadProducts()">
+        Try again <span aria-hidden="true">↗</span>
+      </button>
+    </section>
+  } @else if (products.length === 0) {
+    <section class="catalog-state state-empty">
+      <div class="empty-graphic" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <p class="eyebrow">A LITTLE ROOM TO GROW</p>
+      <h2>The shelves are waiting.</h2>
+      <p>New products will show up here as sellers add them.</p>
+    </section>
+  } @else {
+    <div class="product-grid">
+      @for (product of products; track product.id; let index = $index) {
+        <article
+          class="product-card"
+          [class.card-coral]="index % 4 === 1"
+          [class.card-mint]="index % 4 === 2"
+          [class.card-gold]="index % 4 === 3"
+        >
+          <a
+            class="product-visual"
+            [routerLink]="['/products', product.id]"
+            [attr.aria-label]="'View details for ' + product.name"
+          >
+            @if (product.imageUrls && product.imageUrls.length > 0) {
+              <img
+                class="product-image"
+                [src]="product.imageUrls[0]"
+                [alt]="product.name"
+              >
+              @if (product.imageUrls.length > 1) {
+                <span class="image-count">
+                  <span aria-hidden="true">▧</span>
+                  {{ product.imageUrls.length }} photos
+                </span>
+              }
+            } @else {
+              <div class="product-placeholder" aria-hidden="true">
+                <span>{{ product.name.slice(0, 1) }}</span>
+              </div>
+            }
+            <span class="view-mark" aria-hidden="true">↗</span>
+          </a>
+
+          <div class="product-card-content">
+            <div class="product-meta">
+              @if (product.quantity > 0) {
+                <span class="availability">Available</span>
+              } @else {
+                <span class="availability unavailable">Not available</span>
+              }
+              <p class="price">{{ product.price }}</p>
+            </div>
+            <h3>
+              <a [routerLink]="['/products', product.id]">{{ product.name }}</a>
+            </h3>
+            @if (product.description) {
+              <p class="product-excerpt">{{ product.description }}</p>
+            } @else {
+              <p class="product-excerpt product-excerpt-empty">
+                Made available by an independent seller.
+              </p>
+            }
+            <a class="details-link" [routerLink]="['/products', product.id]">
+              Discover this product <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

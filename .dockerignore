@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+**/target/
+**/node_modules/
+**/.angular/
+**/coverage/
+**/surefire-reports/
+jenkins_home/

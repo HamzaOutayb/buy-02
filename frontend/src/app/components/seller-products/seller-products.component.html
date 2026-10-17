@@ -1,0 +1,174 @@
+<section class="seller-dashboard">
+  <header class="dashboard-hero">
+    <div class="dashboard-heading">
+      <p class="eyebrow">SELLER STUDIO <span> / </span> CATALOG</p>
+      <h1>Your shop,<br><span>all in one place.</span></h1>
+      <p class="hero-description">
+        Keep your listings organized and your inventory up to date..
+      </p>
+    </div>
+
+    <a class="add-product-button" routerLink="/seller/products/new">
+      <span class="plus-mark" aria-hidden="true">+</span>
+      Add a product
+    </a>
+    <div class="hero-stamp" aria-hidden="true">
+      <span>YOUR</span>
+      <strong>SHOP</strong>
+      <span>YOUR WAY</span>
+    </div>
+  </header>
+
+  @if (isLoading) {
+    <section class="dashboard-state" role="status">
+      <span class="loading-mark" aria-hidden="true"></span>
+      <p>Loading your shop...</p>
+    </section>
+  } @else if (errorMessage) {
+    <section class="dashboard-state state-error" role="alert">
+      <p class="eyebrow">CATALOG UNAVAILABLE</p>
+      <h2>We could not load your products.</h2>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="outline-action" (click)="reload()">
+        Try again
+      </button>
+    </section>
+  } @else {
+    <section class="overview" aria-label="Shop overview">
+      <article class="overview-card overview-products">
+        <div class="overview-icon" aria-hidden="true">01</div>
+        <div>
+          <p>Products listed</p>
+          <strong>{{ products.length }}</strong>
+        </div>
+      </article>
+      <article class="overview-card overview-stock">
+        <div class="overview-icon" aria-hidden="true">02</div>
+        <div>
+          <p>Units in stock</p>
+          <strong>{{ totalUnits }}</strong>
+        </div>
+      </article>
+      <article class="overview-card overview-available">
+        <div class="overview-icon" aria-hidden="true">03</div>
+        <div>
+          <p>Available listings</p>
+          <strong>{{ availableCount }}</strong>
+        </div>
+      </article>
+    </section>
+
+    <div class="inventory-heading">
+      <div>
+        <p class="eyebrow">YOUR INVENTORY</p>
+        <h2>Product listings</h2>
+      </div>
+      <span class="inventory-count">{{ products.length }} total</span>
+    </div>
+
+    @if (products.length === 0) {
+      <section class="empty-inventory">
+        <div class="empty-graphic" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div>
+          <p class="eyebrow">START YOUR CATALOG</p>
+          <h2>Your first listing starts here.</h2>
+          <p>Add product details and photos to create your first listing.</p>
+          <a class="outline-action" routerLink="/seller/products/new">
+            Create a product
+          </a>
+        </div>
+      </section>
+    } @else {
+      <section class="inventory-list" aria-label="Your product listings">
+        <div class="inventory-labels" aria-hidden="true">
+          <span>PRODUCT</span>
+          <span>PRICE</span>
+          <span>INVENTORY</span>
+          <span>MANAGE</span>
+        </div>
+
+        @for (product of products; track product.id) {
+          <article class="inventory-row">
+            <div class="listing-details">
+              @if (product.imageUrls && product.imageUrls.length > 0) {
+                <div class="listing-images" [attr.aria-label]="product.imageUrls.length + ' product photos'">
+                  @for (imageUrl of product.imageUrls; track imageUrl; let index = $index) {
+                    <img
+                      [src]="imageUrl"
+                      [alt]="product.name + ' photo ' + (index + 1)"
+                    >
+                  }
+                </div>
+              } @else {
+                <div class="listing-placeholder" aria-hidden="true">
+                  <span>{{ product.name.slice(0, 1) }}</span>
+                </div>
+              }
+              <div class="listing-copy">
+                <h3>{{ product.name }}</h3>
+                @if (product.description) {
+                  <p>{{ product.description }}</p>
+                } @else {
+                  <p class="description-empty">No description added.</p>
+                }
+                @if (product.imageUrls && product.imageUrls.length > 0) {
+                  <span class="photo-count">{{ product.imageUrls.length }} photos</span>
+                } @else {
+                  <span class="photo-count">No photos</span>
+                }
+              </div>
+            </div>
+
+            <div class="listing-price">
+              <span class="mobile-label">Price</span>
+              <strong>{{ product.price }}</strong>
+            </div>
+
+            <div class="listing-stock">
+              @if (product.quantity === 0) {
+                <span class="stock-status stock-empty">Out of stock</span>
+              } @else if (product.quantity <= 3) {
+                <span class="stock-status stock-low">Low stock</span>
+              } @else {
+                <span class="stock-status stock-ready">In stock</span>
+              }
+              <strong>{{ product.quantity }}</strong>
+              <span class="stock-unit">units</span>
+            </div>
+
+            <div class="listing-actions">
+              <a
+                class="action-link preview-link"
+                [routerLink]="['/products', product.id]"
+              >
+                View
+              </a>
+              <a
+                class="action-link edit-link"
+                [routerLink]="['/seller/products', product.id, 'edit']"
+              >
+                Edit
+              </a>
+              <button
+                type="button"
+                class="action-link delete-link"
+                [disabled]="deletingProductId === product.id"
+                (click)="deleteProduct(product)"
+              >
+                @if (deletingProductId === product.id) {
+                  <span>Removing</span>
+                } @else {
+                  <span>Delete</span>
+                }
+              </button>
+            </div>
+          </article>
+        }
+      </section>
+    }
+  }
+</section>

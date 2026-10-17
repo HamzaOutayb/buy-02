@@ -1,0 +1,50 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  mongodb:
+    uri: ${SPRING_MONGODB_URI:${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/user-service-db}}
+  data:
+    mongodb:
+      uri: ${SPRING_MONGODB_URI:${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/user-service-db}}
+      auto-index-creation: true
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 3MB
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-this-development-secret-key-which-is-long-enough}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+media:
+  avatar-root: ${MEDIA_AVATAR_ROOT:avatars}
+
+app:
+  kafka:
+    topics:
+      user-deleted: user.deleted
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    hostname: ${EUREKA_INSTANCE_HOSTNAME:user-service}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

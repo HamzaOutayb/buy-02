@@ -1,0 +1,196 @@
+<section class="product-editor">
+  <header class="editor-heading">
+    <a class="back-link" routerLink="/seller/products">Back to products</a>
+    <p class="eyebrow">SELLER CATALOG</p>
+
+    @if (isEditing) {
+      <h1>Edit product</h1>
+    } @else {
+      <h1>Create product</h1>
+    }
+  </header>
+
+  @if (isLoadingProduct) {
+    <p class="editor-state" role="status">Loading product...</p>
+  } @else if (!isProductReady) {
+    <section class="editor-state" role="alert">
+      <p>{{ errorMessage }}</p>
+      <a class="secondary-action" routerLink="/seller/products">
+        Back to products
+      </a>
+    </section>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="editor-layout">
+        <section class="form-fields" aria-label="Product details">
+          <label for="name">Product name</label>
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            maxlength="100"
+            required
+            [class.invalid]="form.controls.name.invalid && (form.controls.name.dirty || form.controls.name.touched)"
+            [attr.aria-invalid]="form.controls.name.invalid && (form.controls.name.dirty || form.controls.name.touched)"
+          >
+
+          @if (form.controls.name.invalid && (form.controls.name.dirty || form.controls.name.touched)) {
+            <p class="field-error" role="alert">
+              @if (form.controls.name.hasError('required')) {
+                Enter a product name.
+              } @else {
+                Product names must be 50 characters or fewer.
+              }
+            </p>
+          }
+
+          <label for="description">Description</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            maxlength="1000"
+            rows="5"
+          ></textarea>
+          <p class="field-hint">Up to 1,000 characters.</p>
+
+          <div class="number-fields">
+            <div>
+              <label for="price">Price</label>
+              <input
+                id="price"
+                type="number"
+                formControlName="price"
+                min="0.01"
+                step="0.01"
+                required
+                [class.invalid]="form.controls.price.invalid && (form.controls.price.dirty || form.controls.price.touched)"
+                [attr.aria-invalid]="form.controls.price.invalid && (form.controls.price.dirty || form.controls.price.touched)"
+              >
+
+              @if (form.controls.price.invalid && (form.controls.price.dirty || form.controls.price.touched)) {
+                <p class="field-error" role="alert">
+                  @if (form.controls.price.hasError('required')) {
+                    Enter a price.
+                  } @else {
+                    Price must be greater than zero.
+                  }
+                </p>
+              }
+            </div>
+
+            <div>
+              <label for="quantity">Quantity</label>
+              <input
+                id="quantity"
+                type="number"
+                formControlName="quantity"
+                min="0"
+                step="1"
+                required
+                [class.invalid]="form.controls.quantity.invalid && (form.controls.quantity.dirty || form.controls.quantity.touched)"
+                [attr.aria-invalid]="form.controls.quantity.invalid && (form.controls.quantity.dirty || form.controls.quantity.touched)"
+              >
+
+              @if (form.controls.quantity.invalid && (form.controls.quantity.dirty || form.controls.quantity.touched)) {
+                <p class="field-error" role="alert">
+                  @if (form.controls.quantity.hasError('pattern')) {
+                    Enter a whole-number quantity.
+                  } @else {
+                    Enter a quantity of zero or more.
+                  }
+                </p>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="images-field" aria-labelledby="images-title">
+          <div class="images-heading">
+            <div>
+              <h2 id="images-title">Product images</h2>
+              <p>Image files only. Up to 2 MB each.</p>
+            </div>
+            <span class="image-count">
+              {{ existingImageUrls.length + selectedImages.length }} / {{ maximumImages }}
+            </span>
+          </div>
+
+          <label
+            class="upload-button"
+            [class.disabled]="existingImageUrls.length + selectedImages.length >= maximumImages"
+          >
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              [disabled]="existingImageUrls.length + selectedImages.length >= maximumImages"
+              (change)="onImagesSelected($event)"
+            >
+            <span>Select images</span>
+          </label>
+
+          @if (imageError) {
+            <p class="field-error image-error" role="alert">{{ imageError }}</p>
+          }
+
+          @if (existingImageUrls.length > 0 || selectedImages.length > 0) {
+            <div class="image-grid">
+              @for (imageUrl of existingImageUrls; track imageUrl; let index = $index) {
+                <figure class="image-preview">
+                  <img [src]="imageUrl" alt="Saved product image">
+                  <button
+                    type="button"
+                    class="remove-image"
+                    aria-label="Remove saved image"
+                    (click)="removeExistingImage(index)"
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </figure>
+              }
+
+              @for (image of selectedImages; track image.previewUrl; let index = $index) {
+                <figure class="image-preview">
+                  <img [src]="image.previewUrl" alt="Selected product image preview">
+                  <button
+                    type="button"
+                    class="remove-image"
+                    aria-label="Remove selected image"
+                    (click)="removeSelectedImage(index)"
+                  >
+                    <span aria-hidden="true">×</span>
+                  </button>
+                </figure>
+              }
+            </div>
+          }
+        </section>
+      </div>
+
+      @if (errorMessage) {
+        <p class="form-message error" role="alert">{{ errorMessage }}</p>
+      }
+
+      @if (warningMessage) {
+        <p class="form-message warning" role="status">{{ warningMessage }}</p>
+      }
+
+      <footer class="form-actions">
+        <a class="secondary-action" routerLink="/seller/products">Cancel</a>
+        <button
+          type="submit"
+          class="primary-action"
+          [disabled]="isSaving || imageError.length > 0"
+        >
+          @if (isSaving) {
+            <span>Saving...</span>
+          } @else if (isEditing) {
+            <span>Save changes</span>
+          } @else {
+            <span>Create product</span>
+          }
+        </button>
+      </footer>
+    </form>
+  }
+</section>

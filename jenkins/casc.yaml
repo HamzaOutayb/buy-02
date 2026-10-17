@@ -1,0 +1,67 @@
+jenkins:
+  systemMessage: "Configured automatically with JCasC."
+  numExecutors: 1
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: github-read-only
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "Read-only access to the private GitHub repository"
+          - string:
+              scope: GLOBAL
+              id: sonarqube-token
+              secret: "${SONAR_TOKEN}"
+              description: "SonarQube analysis token"
+unclassified:
+  sonarGlobalConfiguration:
+    buildWrapperEnabled: false
+    installations:
+      - name: SonarQube
+        serverUrl: "http://sonarqube:9000"
+        credentialsId: sonarqube-token
+
+tool:
+  sonarRunnerInstallation:
+    installations:
+      - name: SonarScanner
+        properties:
+          - installSource:
+              installers:
+                - sonarRunnerInstaller:
+                    id: "8.1.0.6389"
+
+jobs:
+  - script: |
+      pipelineJob('buy-01') {
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('${GITHUB_REPOSITORY_URL}')
+                  credentials('github-read-only')
+                }
+                branch('*/${GITHUB_BRANCH}')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        triggers {
+          scm('H/1 * * * *')
+        }
+      }

@@ -1,0 +1,44 @@
+<section class="profile-page">
+  <p class="eyebrow">ACCOUNT</p>
+  <h1>Your account</h1>
+
+  @if (isLoading) {
+    <p class="profile-message" role="status">Loading account...</p>
+  } @else if (errorMessage) {
+    <p class="profile-message error" role="alert">{{ errorMessage }}</p>
+  } @else if (currentUser) {
+    <div class="profile-card">
+      <div class="profile-avatar">
+        @if (currentUser.avatar) {
+          <img [src]="currentUser.avatar" [alt]="currentUser.name + ' profile photo'">
+        } @else {
+          <span>{{ currentUser.name.charAt(0).toUpperCase() }}</span>
+        }
+      </div>
+      <h2>{{ currentUser.name }}</h2>
+      <p>{{ currentUser.email }}</p>
+
+      <label class="profile-action" [class.disabled]="isUploadingAvatar">
+        {{ isUploadingAvatar ? 'Uploading...' : 'Change profile photo' }}
+        <input
+          type="file"
+          accept="image/*"
+          [disabled]="isUploadingAvatar"
+          (change)="onAvatarSelected($event)"
+        >
+      </label>
+      @if (errorMessage) {
+        <p class="profile-message error" role="alert">{{ errorMessage }}</p>
+      }
+      @if (successMessage) {
+        <p class="profile-message success" role="status">{{ successMessage }}</p>
+      }
+
+      @if (isSeller) {
+        <a class="profile-action" routerLink="/seller/products">
+          Manage products
+        </a>
+      }
+    </div>
+  }
+</section>

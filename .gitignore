@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+**/target/
+**/node_modules/
+**/.angular/
+**/coverage/
+**/surefire-reports/
+**/failsafe-reports/
+.idea/
+.vscode/
+*.log
