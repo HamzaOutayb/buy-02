@@ -2,8 +2,6 @@ package com.userservice.userservice.exception;
 
 import java.util.NoSuchElementException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -31,7 +29,6 @@ import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler({DuplicateResourceException.class, DuplicateKeyException.class, DataIntegrityViolationException.class})
     public ResponseEntity<ApiError> handleDuplicate(Exception exception, HttpServletRequest request) {
@@ -138,7 +135,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpected(Exception exception, HttpServletRequest request) {
-        logger.error("Unexpected error while handling user request", exception);
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", request);
     }
 

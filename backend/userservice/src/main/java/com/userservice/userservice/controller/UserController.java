@@ -39,10 +39,4 @@ public class UserController {
             @Valid @RequestBody AvatarUpdateRequest request) {
         return userService.updateAvatar(authentication.getName(), request.getAvatar());
     }
-
-    @DeleteMapping("/me")
-    public ResponseEntity<Void> deleteProfile(Authentication authentication) {
-        userService.deleteProfile(authentication.getName());
-        return ResponseEntity.noContent().build();
-    }
 }

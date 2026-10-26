@@ -1,25 +1,19 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { getApiErrorMessage } from '../../helpers/api-error-message';
 import { UserProfile } from '../../models/user.model';
-import { AuthService } from '../../services/auth.service';
 import { MediaService } from '../../services/media.service';
 import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [RouterLink],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {
-  private readonly authService = inject(AuthService);
   private readonly mediaService = inject(MediaService);
   private readonly userService = inject(UserService);
-
-  readonly isSeller = this.authService.isSeller();
 
   currentUser: UserProfile | null = null;
   isLoading = true;
@@ -57,6 +51,25 @@ export class ProfileComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
     this.isUploadingAvatar = true;
+    if(file.size > 5 * 1024 * 1024) {
+      this.errorMessage = 'The selected image exceeds the maximum size of 5MB.';
+      this.isUploadingAvatar = false;
+      return;
+    }
+    if(this.currentUser && this.currentUser.avatar) {
+      this.mediaService.deleteImages([this.currentUser.avatar]).subscribe({
+        next: () => {
+
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage = getApiErrorMessage(
+            error,
+            'The previous profile photo could not be deleted.'
+          );
+          this.isUploadingAvatar = false;
+        }
+      })
+    }
 
     this.mediaService.uploadImages([file]).subscribe({
       next: (urls) => {
@@ -86,10 +99,17 @@ export class ProfileComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         this.errorMessage = getApiErrorMessage(
           error,
-          'The image could not be uploaded. Choose an image up to 2 MB.'
+          'The image could not be uploaded.'
         );
         this.isUploadingAvatar = false;
       }
     });
+  }
+  retryFetchUser(): void
+  {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.ngOnInit();
   }
 }

@@ -7,18 +7,15 @@ import org.springframework.stereotype.Service;
 import com.userservice.userservice.dto.UserResponse;
 import com.userservice.userservice.dto.UserUpdateRequest;
 import com.userservice.userservice.entity.User;
-import com.userservice.userservice.event.UserEventPublisher;
 import com.userservice.userservice.exception.ResourceNotFoundException;
 import com.userservice.userservice.repository.UserRepository;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    private final UserEventPublisher userEventPublisher;
 
-    public UserService(UserRepository userRepository, UserEventPublisher userEventPublisher) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.userEventPublisher = userEventPublisher;
     }
 
     public UserResponse getProfile(String email) {
@@ -62,13 +59,7 @@ public class UserService {
         response.setAvatar(savedUser.getAvatar());
         return response;
     }
-
-    public void deleteProfile(String email) {
-        User user = findByEmail(email);
-        userRepository.delete(user);
-        userEventPublisher.publishUserDeleted(user.getId());
-    }
-
+    
     private User findByEmail(String email) {
         String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
         return userRepository.findByEmail(normalizedEmail)

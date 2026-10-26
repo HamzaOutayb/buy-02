@@ -32,10 +32,10 @@ public class JwtService {
 
         var builder = Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("userId", userId)
                 .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration));
-        builder.claim("userId", userId);
         return builder.signWith(getSigningKey()).compact();
     }
 
@@ -45,9 +45,9 @@ public class JwtService {
 
     public String extractRole(String token) {
         String role = extractClaims(token).get("role", String.class);
-        if (role == null ){
+        if (role == null) {
             return "ROLE_CLIENT";
-        }else{
+        } else {
             return role;
         }
     }

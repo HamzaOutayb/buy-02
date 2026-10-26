@@ -27,6 +27,16 @@ credentials:
               secret: "${SONAR_TOKEN}"
               description: "SonarQube analysis token"
 unclassified:
+  location:
+    adminAddress: "${SMTP_FROM}"
+  mailer:
+    smtpHost: "${SMTP_HOST}"
+    smtpPort: "${SMTP_PORT}"
+    authentication:
+      username: "${SMTP_USERNAME}"
+      password: "${SMTP_PASSWORD}"
+    useSsl: false
+    useTls: true
   sonarGlobalConfiguration:
     buildWrapperEnabled: false
     installations:
@@ -55,13 +65,19 @@ jobs:
                   url('${GITHUB_REPOSITORY_URL}')
                   credentials('github-read-only')
                 }
-                branch('*/${GITHUB_BRANCH}')
+                branch('*/master')
               }
             }
             scriptPath('Jenkinsfile')
           }
         }
-        triggers {
-          scm('H/1 * * * *')
+        properties {
+          pipelineTriggers {
+            triggers {
+              pollSCM {
+                scmpoll_spec('* * * * *')
+              }
+            }
+          }
         }
       }

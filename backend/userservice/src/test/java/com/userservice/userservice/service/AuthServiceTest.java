@@ -29,6 +29,7 @@ import com.userservice.userservice.entity.User;
 import com.userservice.userservice.exception.DuplicateResourceException;
 import com.userservice.userservice.repository.UserRepository;
 import com.userservice.userservice.security.JwtService;
+import com.userservice.userservice.service.AuthService;
 
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;

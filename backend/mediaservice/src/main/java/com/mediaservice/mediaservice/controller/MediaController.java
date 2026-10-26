@@ -1,16 +1,15 @@
 package com.mediaservice.mediaservice.controller;
 
+import com.mediaservice.mediaservice.exception.BadRequestException;
 import com.mediaservice.mediaservice.service.MediaService;
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -46,14 +45,12 @@ public class MediaController {
 
     private void validateImages(List<MultipartFile> images) {
         if (images == null || images.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new BadRequestException(
                     "At least one image is required");
         }
 
         if (images.size() > MAX_IMAGES) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
+            throw new BadRequestException(
                     "A maximum of five images can be uploaded at once");
         }
 
@@ -61,14 +58,12 @@ public class MediaController {
             String contentType = image.getContentType();
 
             if (contentType == null || !contentType.startsWith("image/")) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Only image files can be uploaded");
+                throw new BadRequestException(
+                            "Only image files can be uploaded");
             }
 
             if (image.getSize() > MAX_IMAGE_SIZE) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
+                throw new BadRequestException(
                         "Each image must be 2 MB or smaller");
             }
         }

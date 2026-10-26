@@ -1,6 +1,7 @@
 /// <reference types="jasmine" />
 
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom, Observable, of } from 'rxjs';
 import {
   ActivatedRouteSnapshot,
   provideRouter,
@@ -11,9 +12,11 @@ import {
 import { AuthService } from '../services/auth.service';
 import { authGuard } from './auth.guard';
 import { sellerGuard } from './seller.guard';
+import { UserService } from '../services/user.service';
 
 describe('route guards', () => {
   let authService: jasmine.SpyObj<AuthService>;
+  let userService: jasmine.SpyObj<UserService>;
   let router: Router;
 
   beforeEach(() => {
@@ -21,11 +24,13 @@ describe('route guards', () => {
       'AuthService',
       ['isAuthenticated', 'isSeller']
     );
+    userService = jasmine.createSpyObj<UserService>('UserService', ['getCurrentUser']);
 
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: AuthService, useValue: authService }
+        { provide: AuthService, useValue: authService },
+        { provide: UserService, useValue: userService }
       ]
     });
     router = TestBed.inject(Router);
@@ -62,24 +67,30 @@ describe('route guards', () => {
     expect(authService.isSeller).not.toHaveBeenCalled();
   });
 
-  it('redirects authenticated non-sellers to their profile', () => {
+  it('redirects authenticated non-sellers to their profile', async () => {
     authService.isAuthenticated.and.returnValue(true);
     authService.isSeller.and.returnValue(false);
+    userService.getCurrentUser.and.returnValue(of({
+      id: 'user-1', name: 'Client', email: 'client@example.com', role: 'ROLE_CLIENT', avatar: null
+    }));
 
-    const result = TestBed.runInInjectionContext(() =>
+    const result = await firstValueFrom(TestBed.runInInjectionContext(() =>
       sellerGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-    );
+    ) as Observable<boolean | UrlTree>);
 
     expect(router.serializeUrl(result as UrlTree)).toBe('/profile');
   });
 
-  it('allows authenticated sellers to access seller routes', () => {
+  it('allows authenticated sellers to access seller routes', async () => {
     authService.isAuthenticated.and.returnValue(true);
     authService.isSeller.and.returnValue(true);
+    userService.getCurrentUser.and.returnValue(of({
+      id: 'seller-1', name: 'Seller', email: 'seller@example.com', role: 'ROLE_SELLER', avatar: null
+    }));
 
-    const result = TestBed.runInInjectionContext(() =>
+    const result = await firstValueFrom(TestBed.runInInjectionContext(() =>
       sellerGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-    );
+    ) as Observable<boolean | UrlTree>);
 
     expect(result).toBeTrue();
   });

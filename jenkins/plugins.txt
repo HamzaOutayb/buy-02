@@ -4,3 +4,4 @@ job-dsl
 mailer
 workflow-aggregator
 sonar
+junit

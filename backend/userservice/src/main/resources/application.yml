@@ -21,6 +21,7 @@ spring:
       max-file-size: 2MB
       max-request-size: 3MB
 
+
 security:
   jwt:
     secret: ${JWT_SECRET:change-this-development-secret-key-which-is-long-enough}

@@ -5,6 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { API_BASE_URL, AUTH_TOKEN_KEY } from '../helpers/api-url';
 import { LoginRequest, RegisterRequest, UserRole } from '../models/auth.model';
+import { UserService } from './user.service';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
@@ -67,15 +68,15 @@ describe('AuthService', () => {
     expect(authService.isAuthenticated()).toBeFalse();
   });
 
-  // Identifies a seller from a valid JWT payload and rejects malformed tokens.
-  it('identifies seller tokens and rejects malformed tokens', () => {
-    const payload = btoa(JSON.stringify({ role: 'ROLE_SELLER' }));
-    authService.saveToken(`header.${payload}.signature`);
+  it('identifies sellers from the loaded current user and rejects cleared users', () => {
+    const userService = TestBed.inject(UserService);
+    userService.getCurrentUser().subscribe();
+    const request = httpTestingController.expectOne(`${API_BASE_URL}/me`);
+    request.flush({ id: 'seller-1', name: 'Seller', email: 'seller@example.com', role: 'ROLE_SELLER', avatar: null });
 
     expect(authService.isSeller()).toBeTrue();
 
-    authService.saveToken('not-a-jwt');
-
+    userService.clearCurrentUser();
     expect(authService.isSeller()).toBeFalse();
   });
 });
