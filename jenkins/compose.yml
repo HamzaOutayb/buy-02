@@ -63,6 +63,7 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:?Set SMTP_PASSWORD in jenkins/.env}
       SMTP_FROM: ${SMTP_FROM:-smtp@mailtrap.io}
       NOTIFICATION_EMAIL: ${NOTIFICATION_EMAIL:-houtayb@gmail.com}
+      SONAR_TOKEN: ${SONAR_TOKEN:?Set SONAR_TOKEN in jenkins/.env}
       JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-key-which-is-long-enough}
     volumes:
       - jenkins_home:/var/jenkins_home
