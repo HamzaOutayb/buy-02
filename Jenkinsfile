@@ -1,8 +1,10 @@
 pipeline {
+  // any avaibale agent
   agent any
 
   options {
     skipDefaultCheckout(true)
+    // Prevent concurrent builds of the same job
     disableConcurrentBuilds()
   }
 
@@ -27,6 +29,15 @@ pipeline {
       steps {
         echo 'Building and testing the Product Service.'
         dir('backend/productservice') {
+          sh 'sh ./mvnw -B test'
+        }
+      }
+    }
+
+    stage('Build and test Media Service') {
+      steps {
+        echo 'Building and testing the Media Service.'
+        dir('backend/mediaservice') {
           sh 'sh ./mvnw -B test'
         }
       }
@@ -120,15 +131,51 @@ pipeline {
   }
 
   post {
-    success {
-      echo 'Pipeline completed successfully.'
-      // Uncomment to email on success after SMTP is configured:
-      // mail to: env.NOTIFICATION_EMAIL, subject: "Jenkins SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}", body: "Build: ${env.BUILD_URL}"
+        always {
+        echo 'Publishing test reports.'
+
+        junit(
+            testResults: '**/target/surefire-reports/TEST-*.xml,frontend/test-results/frontend-test-results.xml',
+            allowEmptyResults: false
+        )
+
+        archiveArtifacts(
+            artifacts: '**/target/surefire-reports/**,frontend/test-results/**',
+            allowEmptyArchive: true
+        )
     }
+    success {
+        echo 'Pipeline completed successfully.'
+
+        mail(
+            to: env.NOTIFICATION_EMAIL,
+            subject: "Jenkins SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: """
+Build Status: SUCCESS
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+
+Your pipeline completed successfully.
+"""
+        )
+    }
+
     failure {
-      echo 'Pipeline failed. Check the console output for details.'
-      // Uncomment to email on failure after SMTP is configured:
-      // mail to: env.NOTIFICATION_EMAIL, subject: "Jenkins FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}", body: "Build: ${env.BUILD_URL}"
+        echo 'Pipeline failed. Check the console output for details.'
+
+        mail(
+            to: env.NOTIFICATION_EMAIL,
+            subject: "Jenkins FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: """
+Build Status: FAILURE
+
+Job: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
+
+Check the Jenkins console output to investigate the failure.
+"""
+        )
     }
   }
 }
