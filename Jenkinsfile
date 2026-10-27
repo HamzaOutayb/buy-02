@@ -96,18 +96,21 @@ pipeline {
           withSonarQubeEnv('SonarQube') {
             sh "${scannerHome}/bin/sonar-scanner"
           }
+          timeout(time: 10, unit: 'MINUTES') {
+          waitForQualityGate abortPipeline: true
+        }
         }
       }
     }
 
-    stage('Quality gate') {
-      steps {
-        echo 'Waiting for the SonarQube quality gate.'
-        timeout(time: 10, unit: 'MINUTES') {
-          waitForQualityGate abortPipeline: true
-        }
-      }
-    }
+    // stage('Quality gate') {
+    //   steps {
+    //     echo 'Waiting for the SonarQube quality gate.'
+    //     timeout(time: 10, unit: 'MINUTES') {
+    //       waitForQualityGate abortPipeline: true
+    //     }
+    //   }
+    // }
 
     stage('Deploy application') {
       steps {
@@ -169,30 +172,30 @@ pipeline {
             to: env.NOTIFICATION_EMAIL,
             subject: "Jenkins SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """
-Build Status: SUCCESS
+            Build Status: SUCCESS
 
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
+            Job: ${env.JOB_NAME}
+            Build Number: ${env.BUILD_NUMBER}
 
-Your pipeline completed successfully.
-"""
+            Your pipeline completed successfully.
+            """
         )
     }
 
-    failure {
+    unsuccessful {
         echo 'Pipeline failed. Check the console output for details.'
 
         mail(
             to: env.NOTIFICATION_EMAIL,
             subject: "Jenkins FAILURE: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
             body: """
-Build Status: FAILURE
+            Build Status: FAILURE
 
-Job: ${env.JOB_NAME}
-Build Number: ${env.BUILD_NUMBER}
+            Job: ${env.JOB_NAME}
+            Build Number: ${env.BUILD_NUMBER}
 
-Check the Jenkins console output to investigate the failure.
-"""
+            Check the Jenkins console output to investigate the failure.
+            """
         )
     }
   }

@@ -65,7 +65,7 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./casc.yaml:/usr/share/jenkins/ref/casc.yaml:ro
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/user/60396/podman/podman.sock:/var/run/docker.sock
 
 volumes:
   sonarqube_db_data:
