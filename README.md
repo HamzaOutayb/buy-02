@@ -96,9 +96,37 @@ The backend consists of the following components:
 
 Jenkins provides continuous integration and deployment for the marketplace. It polls the repository's `master` branch, then checks out changes and runs the backend tests and frontend install, build, and test stages.
 
-After those checks, Jenkins runs SonarQube analysis and waits for the quality gate. If the gate passes, Jenkins builds and deploys the marketplace containers. If a deployment fails its health checks, the pipeline attempts to restore the previous successful image version. Jenkins also sends build success or failure notifications by email.
+### Starting Jenkins and SonarQube
 
-For Podman-based Jenkins hosts, set `PODMAN_SOCKET_PATH` in `jenkins/.env` to the host's Podman API socket (typically `/run/user/<host-user-id>/podman/podman.sock`; find the ID with `id -u`). Rootless Podman exposes the mounted socket as `root:root` inside the container, so the Jenkins service adds group `0` while keeping the Jenkins process unprivileged. Recreate the Jenkins container after changing the socket path.
+The Jenkins and SonarQube services are defined in `jenkins/compose.yml`. From the repository root, copy the example environment file and fill in the required credentials and host settings:
+
+```sh
+cp jenkins/.env.example jenkins/.env
+```
+
+Set at least `JENKINS_ADMIN_PASSWORD`, `GITHUB_USERNAME`, `GITHUB_TOKEN`, `SMTP_PASSWORD`, and `PODMAN_SOCKET_PATH` in `jenkins/.env`. Use a GitHub token with read access to the repository. Set `PODMAN_SOCKET_PATH` to the container engine socket on the host. For rootless Podman, this is typically `/run/user/<host-user-id>/podman/podman.sock`; find the ID with `id -u`. The Jenkins container accesses the socket as its unprivileged user through group `0`. Keep `jenkins/.env` private and do not commit it.
+
+Start the CI services with Docker Compose:
+
+```sh
+docker compose --env-file jenkins/.env -f jenkins/compose.yml up -d --build
+```
+
+Jenkins is available at `http://localhost:8088` and SonarQube at `http://localhost:9000` by default. Change `JENKINS_PORT` or `SONAR_PORT` in `jenkins/.env` if those host ports are already in use.
+
+In SonarQube, create a user token with permission to analyze the project, then set it as `SONAR_TOKEN` in `jenkins/.env`. Jenkins Configuration as Code registers this as the `sonarqube-token` credential and configures the SonarQube server at `http://sonarqube:9000` for communication between the containers.
+
+To enable Jenkins to receive quality-gate results, add a SonarQube webhook with this URL:
+
+```text
+http://jenkins:8080/sonarqube-webhook/
+```
+
+Leave the webhook secret blank unless you also configure matching secret validation in Jenkins. The `buy-01` project settings and scan paths are defined in `sonar-project.properties`.
+
+### Analysis and deployment
+
+After the backend tests and frontend install, build, and test stages pass, Jenkins runs SonarQube analysis and waits up to 10 minutes for the quality gate. The webhook delivers the gate result to Jenkins. If the gate passes, Jenkins builds and deploys the marketplace containers. If a deployment fails its health checks, the pipeline attempts to restore the previous successful image version. Jenkins also sends build success or failure notifications by email.
 
 SonarQube analyzes the source code and reports maintainability and reliability issues. Its quality gate is a release check: it decides whether the pipeline may proceed to deployment. SonarQube complements the automated tests; it does not replace them.
 
