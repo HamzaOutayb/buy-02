@@ -2,7 +2,7 @@
   "scripts": {
     "start": "ng serve --host 0.0.0.0 --ssl --ssl-key ssl/server.key --ssl-cert ssl/server.crt",
     "build": "ng build",
-    "test": "ng test buy-frontend --watch=false --browsers=ChromeHeadless --karma-config=karma.conf.js"
+    "test": "ng test buy-frontend --watch=false --karma-config=karma.conf.js"
   },
   "dependencies": {
     "@angular/animations": "^19.0.0",

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<testsuite name="Chrome Headless 154.0.0.0 (Linux 0.0.0)" package="buy-frontend" timestamp="2026-10-27T02:43:44" id="0" hostname="mogomogi" tests="43" errors="0" failures="0" time="0.438">
+  <properties>
+    <property name="browser.fullName" value="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36"/>
+  </properties>
+  <testcase name="route guards allows authenticated users to access protected routes" time="0.015" classname="buy-frontend.route_guards"/>
+  <testcase name="route guards redirects unauthenticated users to sign in" time="0.005" classname="buy-frontend.route_guards"/>
+  <testcase name="route guards redirects unauthenticated users away from seller routes to sign in" time="0.003" classname="buy-frontend.route_guards"/>
+  <testcase name="route guards redirects authenticated non-sellers to their profile" time="0.003" classname="buy-frontend.route_guards"/>
+  <testcase name="route guards allows authenticated sellers to access seller routes" time="0.003" classname="buy-frontend.route_guards"/>
+  <testcase name="getApiErrorMessage returns the message from the server" time="0.001" classname="buy-frontend.getApiErrorMessage"/>
+  <testcase name="getApiErrorMessage returns the fallback when the server has no message" time="0.001" classname="buy-frontend.getApiErrorMessage"/>
+  <testcase name="AuthService posts login credentials" time="0.006" classname="buy-frontend.AuthService"/>
+  <testcase name="AuthService posts registration details" time="0.002" classname="buy-frontend.AuthService"/>
+  <testcase name="AuthService saves and removes the authentication token" time="0.002" classname="buy-frontend.AuthService"/>
+  <testcase name="AuthService identifies sellers from the loaded current user and rejects cleared users" time="0.003" classname="buy-frontend.AuthService"/>
+  <testcase name="MediaService should upload all files as images in multipart form data" time="0.004" classname="buy-frontend.MediaService"/>
+  <testcase name="MediaService should send every image URL as a repeated query parameter when deleting" time="0.002" classname="buy-frontend.MediaService"/>
+  <testcase name="ProductService should fetch all products via GET /products" time="0.002" classname="buy-frontend.ProductService"/>
+  <testcase name="ProductService should fetch a single product by ID via GET /products/:id" time="0.002" classname="buy-frontend.ProductService"/>
+  <testcase name="ProductService should create a new product via POST /products" time="0.002" classname="buy-frontend.ProductService"/>
+  <testcase name="ProductService should update an existing product via PUT /products/:id" time="0.002" classname="buy-frontend.ProductService"/>
+  <testcase name="ProductService should delete a product by ID via DELETE /products/:id" time="0.001" classname="buy-frontend.ProductService"/>
+  <testcase name="LoginComponent starts with required fields invalid" time="0.086" classname="buy-frontend.LoginComponent"/>
+  <testcase name="LoginComponent shows email validation feedback for malformed addresses" time="0.013" classname="buy-frontend.LoginComponent"/>
+  <testcase name="LoginComponent accepts a syntactically valid email address" time="0.007" classname="buy-frontend.LoginComponent"/>
+  <testcase name="LoginComponent does not submit an invalid form" time="0.01" classname="buy-frontend.LoginComponent"/>
+  <testcase name="LoginComponent logs in and navigates after a successful response" time="0.024" classname="buy-frontend.LoginComponent"/>
+  <testcase name="LoginComponent shows an API error when login fails" time="0.009" classname="buy-frontend.LoginComponent"/>
+  <testcase name="ProductDetailsComponent should load product details when a valid id exists in the route" time="0.038" classname="buy-frontend.ProductDetailsComponent"/>
+  <testcase name="ProductDetailsComponent should display error message when product fetch fails with 404" time="0.004" classname="buy-frontend.ProductDetailsComponent"/>
+  <testcase name="ProductDetailsComponent should display not found message when route has no product id" time="0.004" classname="buy-frontend.ProductDetailsComponent"/>
+  <testcase name="ProductDetailsComponent should navigate through images correctly with next and previous buttons" time="0.006" classname="buy-frontend.ProductDetailsComponent"/>
+  <testcase name="ProductsComponent should create the component and load products on initialization" time="0.046" classname="buy-frontend.ProductsComponent"/>
+  <testcase name="ProductsComponent should set hasError to true and stop loading when fetching products fails" time="0.005" classname="buy-frontend.ProductsComponent"/>
+  <testcase name="ProductsComponent should display empty list when no products are returned" time="0.003" classname="buy-frontend.ProductsComponent"/>
+  <testcase name="ProductsComponent should retry loading products when loadProducts() is called again" time="0.003" classname="buy-frontend.ProductsComponent"/>
+  <testcase name="RegisterComponent starts with required fields invalid and the default role selected" time="0.02" classname="buy-frontend.RegisterComponent"/>
+  <testcase name="RegisterComponent validates name and email formats" time="0.011" classname="buy-frontend.RegisterComponent"/>
+  <testcase name="RegisterComponent rejects values outside the form length limits" time="0.008" classname="buy-frontend.RegisterComponent"/>
+  <testcase name="RegisterComponent accepts values at the name, email, and password length boundaries" time="0.007" classname="buy-frontend.RegisterComponent"/>
+  <testcase name="RegisterComponent registers with normalized name and email" time="0.013" classname="buy-frontend.RegisterComponent"/>
+  <testcase name="RegisterComponent does not submit an invalid registration form" time="0.008" classname="buy-frontend.RegisterComponent"/>
+  <testcase name="RegisterComponent shows an API error when registration fails" time="0.007" classname="buy-frontend.RegisterComponent"/>
+  <testcase name="SellerProductsComponent should load current user and only display products owned by this seller" time="0.034" classname="buy-frontend.SellerProductsComponent"/>
+  <testcase name="SellerProductsComponent should set error message when user details fail to load" time="0.004" classname="buy-frontend.SellerProductsComponent"/>
+  <testcase name="SellerProductsComponent should delete product and remove it from list when confirmed" time="0.005" classname="buy-frontend.SellerProductsComponent"/>
+  <testcase name="SellerProductsComponent should not delete product when user cancels the confirmation dialog" time="0.004" classname="buy-frontend.SellerProductsComponent"/>
+  <system-out>
+    <![CDATA[
+]]>
+  </system-out>
+  <system-err/>
+</testsuite>

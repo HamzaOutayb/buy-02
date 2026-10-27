@@ -42,11 +42,8 @@ services:
     build: .
     container_name: buy-01-jenkins
     restart: unless-stopped
-    # The rootless Podman socket is exposed as root:root inside this
-    # container. Keep Jenkins unprivileged, but grant it the socket's group.
-    # This allows Jenkins to run Docker commands without being root.
     group_add:
-      - "0"
+      - "${DOCKER_GID:?Set DOCKER_GID in jenkins/.env}"
     ports:
       - "${JENKINS_PORT:-8088}:8080"
     environment:
@@ -54,7 +51,7 @@ services:
       DOCKER_HOST: unix:///var/run/docker.sock
       JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-admin}
       JENKINS_ADMIN_PASSWORD: ${JENKINS_ADMIN_PASSWORD:?Set JENKINS_ADMIN_PASSWORD in .env}
-      GITHUB_REPOSITORY_URL: ${GITHUB_REPOSITORY_URL:-https://github.com/yahyaahs/jenkins.git}
+      GITHUB_REPOSITORY_URL: ${GITHUB_REPOSITORY_URL:-https://github.com/yahyaahs/safezone.git}
       GITHUB_USERNAME: ${GITHUB_USERNAME:?Set GITHUB_USERNAME in .env}
       GITHUB_TOKEN: ${GITHUB_TOKEN:?Set GITHUB_TOKEN in .env}
       SMTP_HOST: ${SMTP_HOST:-live.smtp.mailtrap.io}
@@ -63,12 +60,12 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:?Set SMTP_PASSWORD in jenkins/.env}
       SMTP_FROM: ${SMTP_FROM:-smtp@mailtrap.io}
       NOTIFICATION_EMAIL: ${NOTIFICATION_EMAIL:-houtayb@gmail.com}
-      SONAR_TOKEN: ${SONAR_TOKEN:?Set SONAR_TOKEN in jenkins/.env}
+      SONAR_TOKEN: ${SONAR_TOKEN:-}
       JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-key-which-is-long-enough}
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./casc.yaml:/usr/share/jenkins/ref/casc.yaml:ro
-      - /run/user/60396/podman/podman.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   sonarqube_db_data:

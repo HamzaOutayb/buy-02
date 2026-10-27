@@ -1,4 +1,0 @@
-setup eurika for the product service
-create a db instance in the docker compose 
-re test all cruds
-and re test the securty filter chain 

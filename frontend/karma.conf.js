@@ -47,7 +47,13 @@ module.exports = function (config) {
       }
     },
     reporters: ['spec', 'junit'],
-    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox']
+      }
+    },
+    browsers: [process.env.CI ? 'ChromeHeadlessNoSandbox' : 'ChromeHeadless'],
     singleRun: true,
     restartOnFileChange: false
   });
