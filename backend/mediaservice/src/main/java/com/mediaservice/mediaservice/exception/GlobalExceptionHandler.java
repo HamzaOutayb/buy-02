@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
         ApiError error = new ApiError(
                 HttpStatus.CONTENT_TOO_LARGE.value(),
                 HttpStatus.CONTENT_TOO_LARGE.getReasonPhrase(),
-                "File size exceeds the maximum allowed limit (2 MB per file, 10 MB total).",
+                "Upload exceeds the maximum allowed limit (2 MB per image or 8 MB per request, including multipart overhead).",
                 request.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE).body(error);
     }

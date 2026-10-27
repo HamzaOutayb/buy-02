@@ -51,8 +51,8 @@ export class ProfileComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
     this.isUploadingAvatar = true;
-    if(file.size > 5 * 1024 * 1024) {
-      this.errorMessage = 'The selected image exceeds the maximum size of 5MB.';
+    if(file.size > 2 * 1024 * 1024) {
+      this.errorMessage = 'The selected image exceeds the maximum size of 2MB.';
       this.isUploadingAvatar = false;
       return;
     }

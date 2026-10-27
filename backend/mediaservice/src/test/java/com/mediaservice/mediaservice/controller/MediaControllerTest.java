@@ -108,6 +108,22 @@ class MediaControllerTest {
     }
 
     @Test
+    void uploadImagesRejectsCombinedImagesLargerThanSevenMegabytesWithoutCallingService() throws Exception {
+        MockMultipartHttpServletRequestBuilder request = multipart("/media/images");
+        byte[] imageContent = new byte[1_500 * 1024];
+        for (int index = 0; index < 5; index++) {
+            request.file(image("image-" + index + ".jpg", "image/jpeg", imageContent));
+        }
+
+        mockMvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Combined image size must be 7 MB or smaller per upload"));
+
+        verify(mediaService, never()).uploadImages(anyList());
+    }
+
+    @Test
     void uploadImagesMapsStorageFailureToBadGateway() throws Exception {
         when(mediaService.uploadImages(anyList()))
                 .thenThrow(new MediaUploadException("Failed to upload image", new IOException("storage down")));

@@ -18,6 +18,7 @@ public class MediaController {
 
     private static final int MAX_IMAGES = 5;
     private static final long MAX_IMAGE_SIZE = 2L * 1024 * 1024;
+    private static final long MAX_TOTAL_IMAGE_SIZE = 7L * 1024 * 1024;
 
     private final MediaService mediaService;
 
@@ -54,6 +55,7 @@ public class MediaController {
                     "A maximum of five images can be uploaded at once");
         }
 
+        long totalImageSize = 0;
         for (MultipartFile image : images) {
             String contentType = image.getContentType();
 
@@ -65,6 +67,12 @@ public class MediaController {
             if (image.getSize() > MAX_IMAGE_SIZE) {
                 throw new BadRequestException(
                         "Each image must be 2 MB or smaller");
+            }
+
+            totalImageSize += image.getSize();
+            if (totalImageSize > MAX_TOTAL_IMAGE_SIZE) {
+                throw new BadRequestException(
+                        "Combined image size must be 7 MB or smaller per upload");
             }
         }
     }

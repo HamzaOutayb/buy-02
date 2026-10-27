@@ -34,6 +34,7 @@ export class ProductFormComponent implements OnInit, OnDestroy {
 
   readonly maximumImages = 5;
   readonly maximumImageSize = 2 * 1024 * 1024;
+  readonly maximumTotalImageSize = 7 * 1024 * 1024;
 
 readonly form = this.formBuilder.group({
   name: [
@@ -132,6 +133,15 @@ readonly form = this.formBuilder.group({
         input.value = '';
         return;
       }
+    }
+
+    const totalImageSize =
+      this.selectedImages.reduce((total, image) => total + image.file.size, 0) +
+      files.reduce((total, file) => total + file.size, 0);
+    if (totalImageSize > this.maximumTotalImageSize) {
+      this.imageError = 'Combined image size must be 7 MB or smaller per upload.';
+      input.value = '';
+      return;
     }
 
     this.imageError = '';
