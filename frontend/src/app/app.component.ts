@@ -41,6 +41,6 @@ export class AppComponent {
   {
     this.authService.logout();
     this.userService.clearCurrentUser();
-    this.router.navigateByUrl('/products');
+    void this.router.navigateByUrl('/products');
   }
 }

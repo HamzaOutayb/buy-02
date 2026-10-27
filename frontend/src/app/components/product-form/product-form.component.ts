@@ -301,7 +301,7 @@ readonly form = this.formBuilder.group({
   {
     this.productService.createProduct(product).subscribe({
       next: () => {
-        this.router.navigateByUrl('/seller/products');
+        void this.router.navigateByUrl('/seller/products');
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = getApiErrorMessage(
@@ -342,13 +342,13 @@ readonly form = this.formBuilder.group({
     this.originalImageUrls = [...savedImageUrls];
 
     if (removedImageUrls.length === 0) {
-      this.router.navigateByUrl('/seller/products');
+      void this.router.navigateByUrl('/seller/products');
       return;
     }
 
     this.mediaService.deleteImages(removedImageUrls).subscribe({
       next: () => {
-        this.router.navigateByUrl('/seller/products');
+        void this.router.navigateByUrl('/seller/products');
       },
       error: () => {
         this.warningMessage =
