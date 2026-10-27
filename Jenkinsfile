@@ -15,11 +15,27 @@ pipeline {
         checkout scm
       }
     }
+    stage('Build and test API Gateway') {
+      steps {
+        echo 'Building and testing the API Gateway.'
+        dir('backend/api-gateway') {
+          sh 'sh ./mvnw -B test jacoco:report'
+        }
+      }
+    }
+    stage('Build and test Eureka Server') {
+      steps {
+        echo 'Building and testing the Eureka Server.'
+        dir('backend/eureka-server') {
+          sh 'sh ./mvnw -B test jacoco:report'
+        }
+      }
+    }
     stage('Build and test User Service') {
       steps {
         echo 'Building and testing the User Service.'
         dir('backend/userservice') {
-          sh 'sh ./mvnw -B test'
+          sh 'sh ./mvnw -B test jacoco:report'
         }
       }
     }
@@ -28,7 +44,7 @@ pipeline {
       steps {
         echo 'Building and testing the Product Service.'
         dir('backend/productservice') {
-          sh 'sh ./mvnw -B test'
+          sh 'sh ./mvnw -B test jacoco:report'
         }
       }
     }
@@ -37,7 +53,7 @@ pipeline {
       steps {
         echo 'Building and testing the Media Service.'
         dir('backend/mediaservice') {
-          sh 'sh ./mvnw -B test'
+          sh 'sh ./mvnw -B test jacoco:report'
         }
       }
     }

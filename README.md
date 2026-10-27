@@ -98,6 +98,8 @@ Jenkins provides continuous integration and deployment for the marketplace. It p
 
 After those checks, Jenkins runs SonarQube analysis and waits for the quality gate. If the gate passes, Jenkins builds and deploys the marketplace containers. If a deployment fails its health checks, the pipeline attempts to restore the previous successful image version. Jenkins also sends build success or failure notifications by email.
 
+For Podman-based Jenkins hosts, set `PODMAN_SOCKET_PATH` in `jenkins/.env` to the host's Podman API socket (typically `/run/user/<host-user-id>/podman/podman.sock`; find the ID with `id -u`). Rootless Podman exposes the mounted socket as `root:root` inside the container, so the Jenkins service adds group `0` while keeping the Jenkins process unprivileged. Recreate the Jenkins container after changing the socket path.
+
 SonarQube analyzes the source code and reports maintainability and reliability issues. Its quality gate is a release check: it decides whether the pipeline may proceed to deployment. SonarQube complements the automated tests; it does not replace them.
 
 ## Project Structure
@@ -122,4 +124,3 @@ safezone/
 ├── backend-architecteur.jpeg
 └── README.md
 ```
-

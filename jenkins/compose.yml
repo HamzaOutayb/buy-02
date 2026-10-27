@@ -42,8 +42,11 @@ services:
     build: .
     container_name: buy-01-jenkins
     restart: unless-stopped
+    # Rootless Podman remaps the socket bind mount to root:root inside the
+    # container. Add the container's root group so the normal Jenkins user
+    # can access the socket without running Jenkins as root.
     group_add:
-      - "${DOCKER_GID:?Set DOCKER_GID in jenkins/.env}"
+      - "0"
     ports:
       - "${JENKINS_PORT:-8088}:8080"
     environment:
@@ -65,7 +68,7 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - ./casc.yaml:/usr/share/jenkins/ref/casc.yaml:ro
-      - /run/user/60396/podman/podman.sock:/var/run/docker.sock
+      - "${PODMAN_SOCKET_PATH:?Set PODMAN_SOCKET_PATH in jenkins/.env}:/var/run/docker.sock"
 
 volumes:
   sonarqube_db_data:
