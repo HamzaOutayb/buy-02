@@ -37,7 +37,7 @@ unclassified:
       password: "${SMTP_PASSWORD}"
     useSsl: false
     useTls: true
-  sonarGlobalConfiguration:
+  sonarglobalconfiguration:
     buildWrapperEnabled: false
     installations:
       - name: SonarQube

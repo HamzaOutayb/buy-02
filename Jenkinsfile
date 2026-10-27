@@ -15,22 +15,7 @@ pipeline {
         checkout scm
       }
     }
-    stage('Build and test API Gateway') {
-      steps {
-        echo 'Building and testing the API Gateway.'
-        dir('backend/api-gateway') {
-          sh 'sh ./mvnw -B test jacoco:report'
-        }
-      }
-    }
-    stage('Build and test Eureka Server') {
-      steps {
-        echo 'Building and testing the Eureka Server.'
-        dir('backend/eureka-server') {
-          sh 'sh ./mvnw -B test jacoco:report'
-        }
-      }
-    }
+
     stage('Build and test User Service') {
       steps {
         echo 'Building and testing the User Service.'

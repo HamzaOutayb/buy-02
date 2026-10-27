@@ -3,5 +3,5 @@ git
 job-dsl
 mailer
 workflow-aggregator
-sonar
+sonar:2.19.0
 junit
