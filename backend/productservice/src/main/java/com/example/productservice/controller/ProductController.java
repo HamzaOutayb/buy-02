@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.productservice.dto.ProductPageResponse;
 import com.example.productservice.dto.ProductRequest;
 import com.example.productservice.dto.ProductResponse;
 import com.example.productservice.service.ProductService;
@@ -28,6 +30,16 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<List<ProductResponse>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ProductPageResponse> searchProducts(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        return ResponseEntity.ok(
+                productService.searchProducts(q, category, page, size));
     }
 
     @GetMapping("/{id}")

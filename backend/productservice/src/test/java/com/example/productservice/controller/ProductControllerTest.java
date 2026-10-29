@@ -32,8 +32,10 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.example.productservice.dto.ProductRequest;
 import com.example.productservice.dto.ProductResponse;
+import com.example.productservice.dto.ProductPageResponse;
 import com.example.productservice.exception.ForbiddenException;
 import com.example.productservice.exception.GlobalExceptionHandler;
+import com.example.productservice.exception.InvalidProductSearchException;
 import com.example.productservice.exception.ProductNotFoundException;
 import com.example.productservice.service.ProductService;
 
@@ -77,6 +79,37 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$[0].sellerId").value(SELLER_ID));
 
         verify(productService).getAllProducts();
+    }
+
+    @Test
+    void searchProductsPassesFiltersAndReturnsPagedResults() throws Exception {
+        when(productService.searchProducts(
+                "keyboard", "Electronics", 0, 12))
+                .thenReturn(new ProductPageResponse(List.of(productResponse()), 0, 12, 1, 1));
+
+        mockMvc.perform(get("/products/search")
+                        .param("q", "keyboard")
+                        .param("category", "Electronics")
+                        .param("page", "0")
+                        .param("size", "12"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value("product-1"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(productService).searchProducts(
+                "keyboard", "Electronics", 0, 12);
+    }
+
+    @Test
+    void searchProductsReturnsBadRequestForInvalidPageSize() throws Exception {
+        when(productService.searchProducts(null, null, 0, 0))
+                .thenThrow(new InvalidProductSearchException("Page size must be between 1 and 50"));
+
+        mockMvc.perform(get("/products/search")
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Page size must be between 1 and 50"));
     }
 
     @Test

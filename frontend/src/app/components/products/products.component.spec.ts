@@ -3,7 +3,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { Product } from '../../models/product.model';
+import { Product, ProductPage } from '../../models/product.model';
 import { ProductService } from '../../services/product.service';
 import { ProductsComponent } from './products.component';
 
@@ -45,9 +45,19 @@ describe('ProductsComponent', () => {
     }
   ];
 
+  const productPage: ProductPage = {
+    content: mockProducts,
+    page: 0,
+    size: 12,
+    totalElements: 2,
+    totalPages: 1
+  };
+
   beforeEach(async () => {
-    // 1. Create a mock ProductService with a spy for 'getProducts'
-    productServiceSpy = jasmine.createSpyObj<ProductService>('ProductService', ['getProducts']);
+    productServiceSpy = jasmine.createSpyObj<ProductService>(
+      'ProductService',
+      ['searchProducts']
+    );
 
     // 2. Configure the testing module with the standalone component and our mock service
     await TestBed.configureTestingModule({
@@ -67,7 +77,7 @@ describe('ProductsComponent', () => {
   // =========================================================================
   it('should create the component and load products on initialization', () => {
     // ARRANGE: Tell the spy to return our mock products as an Observable
-    productServiceSpy.getProducts.and.returnValue(of(mockProducts));
+    productServiceSpy.searchProducts.and.returnValue(of(productPage));
 
     // ACT: Run change detection which executes ngOnInit() -> loadProducts()
     fixture.detectChanges();
@@ -81,7 +91,7 @@ describe('ProductsComponent', () => {
     expect(component.products).toEqual(mockProducts);
 
     // Verify getProducts was called once
-    expect(productServiceSpy.getProducts).toHaveBeenCalledTimes(1);
+    expect(productServiceSpy.searchProducts).toHaveBeenCalledTimes(1);
   });
 
   // =========================================================================
@@ -89,7 +99,7 @@ describe('ProductsComponent', () => {
   // =========================================================================
   it('should set hasError to true and stop loading when fetching products fails', () => {
     // ARRANGE: Simulate an API error
-    productServiceSpy.getProducts.and.returnValue(
+    productServiceSpy.searchProducts.and.returnValue(
       throwError(() => new Error('Network error'))
     );
 
@@ -107,7 +117,13 @@ describe('ProductsComponent', () => {
   // =========================================================================
   it('should display empty list when no products are returned', () => {
     // ARRANGE: Return an empty list
-    productServiceSpy.getProducts.and.returnValue(of([]));
+    productServiceSpy.searchProducts.and.returnValue(of({
+      content: [],
+      page: 0,
+      size: 12,
+      totalElements: 0,
+      totalPages: 0
+    }));
 
     // ACT:
     fixture.detectChanges();
@@ -123,20 +139,57 @@ describe('ProductsComponent', () => {
   // =========================================================================
   it('should retry loading products when loadProducts() is called again', () => {
     // ARRANGE: First attempt fails
-    productServiceSpy.getProducts.and.returnValue(
+    productServiceSpy.searchProducts.and.returnValue(
       throwError(() => new Error('Server down'))
     );
     fixture.detectChanges();
     expect(component.hasError).toBeTrue();
 
     // ACT: Second attempt succeeds when user retries
-    productServiceSpy.getProducts.and.returnValue(of(mockProducts));
+    productServiceSpy.searchProducts.and.returnValue(of(productPage));
     component.loadProducts();
 
     // ASSERT:
     expect(component.isLoading).toBeFalse();
     expect(component.hasError).toBeFalse();
     expect(component.products).toEqual(mockProducts);
-    expect(productServiceSpy.getProducts).toHaveBeenCalledTimes(2);
+    expect(productServiceSpy.searchProducts).toHaveBeenCalledTimes(2);
+  });
+
+  it('should send current filters and reset pagination when applying search', () => {
+    productServiceSpy.searchProducts.and.returnValue(of(productPage));
+    fixture.detectChanges();
+
+    component.searchTerm = ' keyboard ';
+    component.category = 'Electronics';
+    component.page = 2;
+    component.applyFilters();
+
+    expect(component.page).toBe(0);
+    expect(productServiceSpy.searchProducts).toHaveBeenCalledWith({
+      q: 'keyboard',
+      category: 'Electronics',
+      page: 0,
+      size: 12
+    });
+  });
+
+  it('should clear the keyword and category filters', () => {
+    productServiceSpy.searchProducts.and.returnValue(of(productPage));
+    fixture.detectChanges();
+
+    component.searchTerm = 'keyboard';
+    component.category = 'Electronics';
+    component.clearFilters();
+
+    expect(component.searchTerm).toBe('');
+    expect(component.category).toBe('');
+    expect(component.page).toBe(0);
+    expect(productServiceSpy.searchProducts).toHaveBeenCalledWith({
+      q: '',
+      category: '',
+      page: 0,
+      size: 12
+    });
   });
 });

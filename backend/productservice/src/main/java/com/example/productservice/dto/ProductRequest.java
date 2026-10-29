@@ -23,6 +23,9 @@ public class ProductRequest {
     @Size(max = 2000, message = "Description must not exceed 2000 characters")
     private String description;
 
+    @Size(max = 50, message = "Category must not exceed 50 characters")
+    private String category;
+
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.01", message = "Price must be greater than zero")
     @DecimalMax(value = "100000000", message = "Price must not exceed 100000000")

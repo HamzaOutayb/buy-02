@@ -20,6 +20,41 @@
     </div>
   </header>
 
+  <form class="product-filters" (ngSubmit)="applyFilters()" aria-label="Search and filter products">
+    <div class="filter-field keyword-field">
+      <label for="product-search">Search products</label>
+      <input
+        id="product-search"
+        name="searchTerm"
+        type="search"
+        [(ngModel)]="searchTerm"
+        maxlength="100"
+        placeholder="Search by name or description"
+      >
+    </div>
+
+    <div class="filter-field">
+      <label for="product-category">Category</label>
+      <input
+        id="product-category"
+        name="category"
+        type="text"
+        [(ngModel)]="category"
+        maxlength="50"
+        placeholder="Any category"
+      >
+    </div>
+
+    <div class="filter-actions">
+      <button type="submit" class="filter-submit">Search</button>
+      <button type="button" class="filter-clear" (click)="clearFilters()">Clear</button>
+    </div>
+
+    @if (filterError) {
+      <p class="filter-error" role="alert">{{ filterError }}</p>
+    }
+  </form>
+
   <div class="collection-heading" id="product-grid">
     <div>
       <p class="eyebrow">CURATED BY OUR COMMUNITY</p>
@@ -27,8 +62,8 @@
     </div>
     @if (!isLoading && !hasError) {
       <p class="item-count">
-        <span>{{ products.length }}</span>
-        @if (products.length === 1) {
+        <span>{{ totalElements }}</span>
+        @if (totalElements === 1) {
           <span>product</span>
         } @else {
           <span>products</span>
@@ -53,14 +88,21 @@
     </section>
   } @else if (products.length === 0) {
     <section class="catalog-state state-empty">
-      <div class="empty-graphic" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      <p class="eyebrow">A LITTLE ROOM TO GROW</p>
-      <h2>The shelves are waiting.</h2>
-      <p>New products will show up here as sellers add them.</p>
+      @if (hasActiveFilters) {
+        <p class="eyebrow">NO MATCHES FOUND</p>
+        <h2>Try a different search.</h2>
+        <p>Adjust your keywords or filters to see more products.</p>
+        <button type="button" class="text-button" (click)="clearFilters()">Clear filters</button>
+      } @else {
+        <div class="empty-graphic" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <p class="eyebrow">A LITTLE ROOM TO GROW</p>
+        <h2>The shelves are waiting.</h2>
+        <p>New products will show up here as sellers add them.</p>
+      }
     </section>
   } @else {
     <div class="product-grid">
@@ -122,5 +164,27 @@
         </article>
       }
     </div>
+
+    @if (totalPages > 1) {
+      <nav class="pagination" aria-label="Product pages">
+        <button
+          type="button"
+          class="page-button"
+          [disabled]="page === 0"
+          (click)="goToPage(page - 1)"
+        >
+          Previous
+        </button>
+        <span aria-live="polite">Page {{ page + 1 }} of {{ totalPages }}</span>
+        <button
+          type="button"
+          class="page-button"
+          [disabled]="page + 1 >= totalPages"
+          (click)="goToPage(page + 1)"
+        >
+          Next
+        </button>
+      </nav>
+    }
   }
 </section>

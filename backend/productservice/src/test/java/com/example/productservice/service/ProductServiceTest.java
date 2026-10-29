@@ -21,10 +21,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 
 import com.example.productservice.dto.ProductRequest;
 import com.example.productservice.dto.ProductResponse;
 import com.example.productservice.exception.ForbiddenException;
+import com.example.productservice.exception.InvalidProductSearchException;
 import com.example.productservice.exception.ProductNotFoundException;
 import com.example.productservice.mapper.ProductMapper;
 import com.example.productservice.model.Product;
@@ -39,6 +42,9 @@ class ProductServiceTest {
     @Mock
     private KafkaTemplate<String, ProductService.ProductDeletedEvent> kafkaTemplate;
 
+    @Mock
+    private MongoTemplate mongoTemplate;
+
     private ProductService productService;
     private ProductMapper productMapper;
     private Product product;
@@ -47,7 +53,7 @@ class ProductServiceTest {
     @BeforeEach
     void setUp() {
         productMapper = new ProductMapper();
-        productService = new ProductService(productRepository, productMapper, kafkaTemplate);
+        productService = new ProductService(productRepository, productMapper, kafkaTemplate, mongoTemplate);
 
         product = new Product();
         product.setId("product-1");
@@ -85,6 +91,34 @@ class ProductServiceTest {
         List<ProductResponse> responses = productService.getAllProducts();
 
         assertEquals(List.of(), responses);
+    }
+
+    @Test
+    void searchProductsReturnsFilteredPageAndPaginationMetadata() {
+        product.setCategory("Electronics");
+        when(mongoTemplate.find(any(Query.class), eq(Product.class))).thenReturn(List.of(product));
+        when(mongoTemplate.count(any(Query.class), eq(Product.class))).thenReturn(21L);
+
+        var result = productService.searchProducts(
+                "keyboard", "electronics", 1, 10);
+
+        assertEquals(1, result.content().size());
+        assertEquals("Electronics", result.content().get(0).getCategory());
+        assertEquals(1, result.page());
+        assertEquals(10, result.size());
+        assertEquals(21L, result.totalElements());
+        assertEquals(3, result.totalPages());
+        verify(mongoTemplate).find(any(Query.class), eq(Product.class));
+        verify(mongoTemplate).count(any(Query.class), eq(Product.class));
+    }
+
+    @Test
+    void searchProductsRejectsInvalidPageSize() {
+        assertThrows(InvalidProductSearchException.class,
+                () -> productService.searchProducts(
+                        null, null, 0, 0));
+
+        verify(mongoTemplate, never()).find(any(Query.class), eq(Product.class));
     }
 
     @Test

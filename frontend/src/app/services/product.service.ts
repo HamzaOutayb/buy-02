@@ -1,7 +1,12 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Product, ProductInput } from '../models/product.model';
+import {
+  Product,
+  ProductInput,
+  ProductPage,
+  ProductSearchFilters
+} from '../models/product.model';
 import { API_BASE_URL } from '../helpers/api-url';
 
 @Injectable({
@@ -13,6 +18,19 @@ export class ProductService {
   getProducts(): Observable<Product[]>
   {
     return this.http.get<Product[]>(`${API_BASE_URL}/products`);
+  }
+
+  searchProducts(filters: ProductSearchFilters): Observable<ProductPage>
+  {
+    let params = new HttpParams();
+
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, value);
+      }
+    }
+
+    return this.http.get<ProductPage>(`${API_BASE_URL}/products/search`, { params });
   }
 
   getProduct(productId: string): Observable<Product>

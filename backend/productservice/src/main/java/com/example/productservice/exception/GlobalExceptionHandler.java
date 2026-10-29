@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -35,6 +36,21 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<Map<String, Object>> handleForbidden(ForbiddenException ex, WebRequest request) {
         return buildErrorResponse(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(InvalidProductSearchException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidProductSearch(
+            InvalidProductSearchException ex,
+            WebRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid Search", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidParameter(
+            MethodArgumentTypeMismatchException ex,
+            WebRequest request) {
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid Parameter",
+                "Invalid value for parameter: " + ex.getName(), request);
     }
 
     @ExceptionHandler(IllegalStateException.class)
