@@ -1,0 +1,149 @@
+.checkout-page {
+  max-width: 850px;
+  margin: 0 auto;
+  color: #142e33;
+}
+
+.checkout-back {
+  color: #277f89;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.checkout-page header {
+  margin: 25px 0;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #277f89;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.checkout-page h1 {
+  margin: 0 0 8px;
+  font-size: clamp(32px, 5vw, 48px);
+  letter-spacing: -0.06em;
+}
+
+.checkout-page header > p:last-child {
+  color: #647377;
+  font-size: 13px;
+}
+
+.checkout-layout form {
+  display: grid;
+  gap: 14px;
+}
+
+.checkout-card {
+  display: grid;
+  padding: 20px;
+  border: 1px solid #deded5;
+  background: #fff;
+}
+
+.checkout-card h2 {
+  margin: 0 0 15px;
+  font-size: 17px;
+}
+
+.checkout-card label {
+  margin: 10px 0 5px;
+  color: #647377;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.checkout-card input {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid #deded5;
+  font: inherit;
+}
+
+.checkout-card input:focus {
+  border-color: #277f89;
+  outline: 2px solid #277f8933;
+}
+
+.address-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.address-row > div {
+  display: grid;
+}
+
+.review-item,
+.review-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.review-total {
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid #deded5;
+  font-size: 15px;
+}
+
+.payment-card {
+  background: #faf8f3;
+}
+
+.payment-card p {
+  margin: 0;
+  color: #647377;
+  font-size: 13px;
+}
+
+.checkout-submit {
+  min-height: 46px;
+  border: 1px solid #142e33;
+  background: #142e33;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.field-error {
+  color: #a04436;
+  font-size: 11px;
+}
+
+.checkout-card input[aria-invalid="true"] {
+  border-color: #a04436;
+}
+
+.checkout-submit:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.checkout-error {
+  color: #a04436;
+}
+
+.checkout-state {
+  padding: 40px;
+  background: #faf8f3;
+  text-align: center;
+}
+
+@media (max-width: 540px) {
+  .address-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

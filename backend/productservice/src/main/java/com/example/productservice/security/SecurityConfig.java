@@ -43,6 +43,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
 
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/products/*/reserve", "/products/*/release")
+                        .permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/auth/register",

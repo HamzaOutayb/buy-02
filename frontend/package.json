@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "ng serve --host 0.0.0.0 --ssl --ssl-key ssl/server.key --ssl-cert ssl/server.crt",
+    "start": "ng serve --host 0.0.0.0 --ssl=false",
+    "start:docker": "ng serve --host 0.0.0.0 --ssl --ssl-key ssl/server.key --ssl-cert ssl/server.crt",
     "build": "ng build",
     "test": "ng test buy-frontend --watch=false --karma-config=karma.conf.js"
   },

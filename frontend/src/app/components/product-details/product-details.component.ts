@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { getApiErrorMessage } from '../../helpers/api-error-message';
 import { Product } from '../../models/product.model';
+import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
 import { ProductService } from '../../services/product.service';
 
 @Component({
@@ -14,6 +16,9 @@ import { ProductService } from '../../services/product.service';
 })
 export class ProductDetailsComponent implements OnInit {
   private readonly productService = inject(ProductService);
+  private readonly cartService = inject(CartService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
   product: Product | null = null;
@@ -21,6 +26,8 @@ export class ProductDetailsComponent implements OnInit {
   activeImageIndex = 0;
   isLoading = true;
   errorMessage = '';
+  cartMessage = '';
+  isAddingToCart = false;
 
   ngOnInit(): void
   {
@@ -66,6 +73,30 @@ export class ProductDetailsComponent implements OnInit {
     }
 
     this.activeImageIndex += 1;
+  }
+
+  addToCart(): void
+  {
+    this.cartMessage = '';
+    if (!this.authService.isAuthenticated()) {
+      void this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+    if (this.authService.isSeller() || !this.product || this.product.quantity < 1) {
+      this.cartMessage = 'Only buyers can add available products to a cart.';
+      return;
+    }
+    this.isAddingToCart = true;
+    this.cartService.addItem(this.product.id).subscribe({
+      next: () => {
+        this.cartMessage = 'Added to your cart.';
+        this.isAddingToCart = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.cartMessage = getApiErrorMessage(error, 'This product could not be added to your cart.');
+        this.isAddingToCart = false;
+      }
+    });
   }
 
   private loadProduct(productId: string): void

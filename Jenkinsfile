@@ -34,6 +34,15 @@ pipeline {
       }
     }
 
+    stage('Build and test Order Service') {
+      steps {
+        echo 'Building and testing the Order Service.'
+        dir('backend/orderservice') {
+          sh 'sh ./mvnw -B test jacoco:report'
+        }
+      }
+    }
+
     stage('Build and test Media Service') {
       steps {
         echo 'Building and testing the Media Service.'

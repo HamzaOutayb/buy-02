@@ -5,6 +5,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Product } from '../../models/product.model';
+import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
 import { ProductService } from '../../services/product.service';
 import { ProductDetailsComponent } from './product-details.component';
 
@@ -21,6 +23,8 @@ describe('ProductDetailsComponent', () => {
   let fixture: ComponentFixture<ProductDetailsComponent>;
   let component: ProductDetailsComponent;
   let productServiceSpy: jasmine.SpyObj<ProductService>;
+  let cartServiceSpy: jasmine.SpyObj<CartService>;
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
 
   const mockProduct: Product = {
     id: 'prod-123',
@@ -41,12 +45,16 @@ describe('ProductDetailsComponent', () => {
    */
   async function setupTestingModule(routeId: string | null) {
     productServiceSpy = jasmine.createSpyObj<ProductService>('ProductService', ['getProduct']);
+    cartServiceSpy = jasmine.createSpyObj<CartService>('CartService', ['addItem']);
+    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'isSeller']);
 
     await TestBed.configureTestingModule({
       imports: [ProductDetailsComponent],
       providers: [
         provideRouter([]),
         { provide: ProductService, useValue: productServiceSpy },
+        { provide: CartService, useValue: cartServiceSpy },
+        { provide: AuthService, useValue: authServiceSpy },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -155,5 +163,19 @@ describe('ProductDetailsComponent', () => {
     // 5. Direct selection: jump to index 1
     component.selectImage(1);
     expect(component.activeImageIndex).toBe(1);
+  });
+
+  it('should add the product to the buyer cart', async () => {
+    await setupTestingModule('prod-123');
+    productServiceSpy.getProduct.and.returnValue(of(mockProduct));
+    authServiceSpy.isAuthenticated.and.returnValue(true);
+    authServiceSpy.isSeller.and.returnValue(false);
+    cartServiceSpy.addItem.and.returnValue(of({ items: [], subtotal: 0 }));
+    fixture.detectChanges();
+
+    component.addToCart();
+
+    expect(cartServiceSpy.addItem).toHaveBeenCalledWith('prod-123');
+    expect(component.cartMessage).toBe('Added to your cart.');
   });
 });

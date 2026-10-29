@@ -1,0 +1,71 @@
+<section class="commerce-page">
+  <a class="commerce-back" routerLink="/products">← Continue shopping</a>
+  <header class="commerce-heading">
+    <p class="eyebrow">YOUR SELECTION</p>
+    <h1>Shopping cart</h1>
+  </header>
+
+  @if (isLoading) {
+    <p class="commerce-state" role="status">Loading your cart…</p>
+  } @else if (errorMessage && cart.items.length === 0) {
+    <section class="commerce-state" role="alert">
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="commerce-button" (click)="loadCart()">Try again</button>
+    </section>
+  } @else if (cart.items.length === 0) {
+    <section class="commerce-state">
+      <h2>Your cart is empty</h2>
+      <p>Find something you like and add it here.</p>
+      <a class="commerce-button" routerLink="/products">Browse products</a>
+    </section>
+  } @else {
+    @if (errorMessage) {
+      <p class="commerce-error" role="alert">{{ errorMessage }}</p>
+    }
+    <div class="cart-layout">
+      <div class="cart-items">
+        @for (item of cart.items; track item.productId) {
+          <article class="cart-item">
+            @if (item.imageUrls?.length) {
+              <img class="cart-image" [src]="item.imageUrls[0]" [alt]="item.name">
+            } @else {
+              <div class="cart-image cart-image-placeholder" aria-hidden="true">{{ item.name.slice(0, 1) }}</div>
+            }
+            <div class="cart-item-details">
+              <h2>{{ item.name }}</h2>
+              @if (item.category) {
+                <p>{{ item.category }}</p>
+              }
+              <strong>{{ item.unitPrice | number:'1.2-2' }}</strong>
+            </div>
+            <label class="quantity-control">
+              <span>Quantity</span>
+              <input
+                type="number"
+                min="1"
+                [value]="item.quantity"
+                [disabled]="updatingProductId === item.productId"
+                (change)="changeQuantity(item, $event)"
+              >
+            </label>
+            <strong class="line-total">{{ item.lineTotal | number:'1.2-2' }}</strong>
+            <button
+              type="button"
+              class="remove-item"
+              [disabled]="updatingProductId === item.productId"
+              (click)="remove(item)"
+              [attr.aria-label]="'Remove ' + item.name"
+            >Remove</button>
+          </article>
+        }
+      </div>
+
+      <aside class="cart-summary">
+        <h2>Order summary</h2>
+        <p><span>Subtotal</span><strong>{{ cart.subtotal | number:'1.2-2' }}</strong></p>
+        <p class="payment-note">Payment method: Pay on Delivery</p>
+        <a class="commerce-button" routerLink="/checkout">Continue to checkout</a>
+      </aside>
+    </div>
+  }
+</section>

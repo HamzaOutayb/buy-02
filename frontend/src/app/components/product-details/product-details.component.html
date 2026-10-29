@@ -108,6 +108,20 @@
           }
         </div>
 
+        @if (product.quantity > 0) {
+          <button
+            type="button"
+            class="add-to-cart-button"
+            [disabled]="isAddingToCart"
+            (click)="addToCart()"
+          >
+            {{ isAddingToCart ? 'Adding…' : 'Add to cart' }}
+          </button>
+        }
+        @if (cartMessage) {
+          <p class="cart-message" role="status">{{ cartMessage }}</p>
+        }
+
         <p class="seller-note">
           Listed by an independent seller on the Buy marketplace.
         </p>

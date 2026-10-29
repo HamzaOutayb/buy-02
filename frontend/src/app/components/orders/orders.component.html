@@ -1,0 +1,128 @@
+<section class="orders-page">
+  <a class="orders-back" routerLink="/products">← Continue shopping</a>
+  <header>
+    <p class="eyebrow">YOUR ACCOUNT</p>
+    @if (selectedOrder) {
+      <h1>Order details</h1>
+    } @else {
+      <h1>Your orders</h1>
+    }
+  </header>
+
+  @if (errorMessage) {
+    <p class="orders-error" role="alert">{{ errorMessage }}</p>
+  }
+  @if (successMessage) {
+    <p class="orders-success" role="status">
+      {{ successMessage }} <a routerLink="/cart">View cart</a>
+    </p>
+  }
+
+  @if (!selectedOrder) {
+    <form class="order-filters" (ngSubmit)="applyFilters()">
+      <label>
+        Search order or product
+        <input name="search" [(ngModel)]="searchText" placeholder="Order ID or product">
+      </label>
+      <label>
+        Status
+        <select name="status" [(ngModel)]="statusFilter">
+          <option value="">All statuses</option>
+          <option value="PLACED">Placed</option>
+          <option value="PROCESSING">Processing</option>
+          <option value="SHIPPED">Shipped</option>
+          <option value="DELIVERED">Delivered</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </label>
+      <label>From <input name="from" type="date" [(ngModel)]="fromDate"></label>
+      <label>To <input name="to" type="date" [(ngModel)]="toDate"></label>
+      <button class="secondary-button" type="submit">Search</button>
+      <button class="secondary-button" type="button" (click)="clearFilters()">Clear</button>
+    </form>
+  }
+
+  @if (isLoading) {
+    <p role="status">Loading orders…</p>
+  } @else if (selectedOrder) {
+    <article class="order-card">
+      <div class="order-title">
+        <div>
+          <p>Order #{{ selectedOrder.id }}</p>
+          <h2>{{ selectedOrder.status }}</h2>
+        </div>
+        <time>{{ selectedOrder.createdAt | date:'medium' }}</time>
+      </div>
+      <div class="order-timeline" aria-label="Order status">
+        @for (step of ['PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED']; track step) {
+          <span [class.complete]="statusReached(selectedOrder.status, step)">{{ step }}</span>
+        }
+      </div>
+      <div class="order-lines">
+        @for (item of selectedOrder.items; track item.productId) {
+          <p>
+            <span>{{ item.productName }} × {{ item.quantity }}</span>
+            <strong>{{ item.lineTotal | number:'1.2-2' }}</strong>
+          </p>
+        }
+      </div>
+      <div class="address-block">
+        <h3>Delivery address</h3>
+        <p>{{ selectedOrder.deliveryAddress.recipientName }} · {{ selectedOrder.deliveryAddress.phone }}</p>
+        <p>{{ selectedOrder.deliveryAddress.street }}, {{ selectedOrder.deliveryAddress.city }} {{ selectedOrder.deliveryAddress.postalCode }}</p>
+      </div>
+      <p class="payment-method">Pay on Delivery</p>
+      <p class="order-total"><span>Total</span><strong>{{ selectedOrder.total | number:'1.2-2' }}</strong></p>
+      <div class="order-actions">
+        @if (selectedOrder.status === 'PLACED') {
+          <button type="button" class="danger-button" [disabled]="busyOrderId === selectedOrder.id" (click)="cancel(selectedOrder)">
+            Cancel order
+          </button>
+        }
+        @if (selectedOrder.status === 'CANCELLED' || selectedOrder.status === 'DELIVERED') {
+          <button type="button" class="danger-button" [disabled]="busyOrderId === selectedOrder.id" (click)="archive(selectedOrder)">
+            Remove from history
+          </button>
+        }
+        <button type="button" class="secondary-button" [disabled]="busyOrderId === selectedOrder.id" (click)="reorder(selectedOrder)">
+          Reorder
+        </button>
+      </div>
+      <a routerLink="/orders">Back to order history</a>
+    </article>
+  } @else if (orders.length === 0) {
+    <section class="orders-empty">
+      <h2>No matching orders</h2>
+      <p>Try changing your search or filters.</p>
+      <a routerLink="/products">Browse products</a>
+    </section>
+  } @else {
+    <div class="orders-list">
+      @for (order of orders; track order.id) {
+        <article class="order-card">
+          <div class="order-title">
+            <div>
+              <p>Order #{{ order.id }}</p>
+              <h2>{{ order.status }}</h2>
+            </div>
+            <time>{{ order.createdAt | date:'mediumDate' }}</time>
+          </div>
+          <p class="order-preview">
+            {{ order.items.length }} item(s) · {{ order.items[0]?.productName }}
+          </p>
+          <p class="order-total"><span>Total · Pay on Delivery</span><strong>{{ order.total | number:'1.2-2' }}</strong></p>
+          <div class="order-actions">
+            <a class="secondary-button" [routerLink]="['/orders', order.id]">View details</a>
+            @if (order.status === 'PLACED') {
+              <button type="button" class="danger-button" [disabled]="busyOrderId === order.id" (click)="cancel(order)">Cancel</button>
+            }
+            @if (order.status === 'CANCELLED' || order.status === 'DELIVERED') {
+              <button type="button" class="danger-button" [disabled]="busyOrderId === order.id" (click)="archive(order)">Remove</button>
+            }
+            <button type="button" class="secondary-button" [disabled]="busyOrderId === order.id" (click)="reorder(order)">Reorder</button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

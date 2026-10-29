@@ -38,6 +38,13 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.FORBIDDEN, "Forbidden", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientStock(
+            InsufficientStockException ex,
+            WebRequest request) {
+        return buildErrorResponse(HttpStatus.CONFLICT, "Insufficient Stock", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(InvalidProductSearchException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidProductSearch(
             InvalidProductSearchException ex,

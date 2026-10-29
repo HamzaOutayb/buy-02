@@ -1,0 +1,61 @@
+<section class="seller-orders">
+  <header>
+    <p class="eyebrow">SELLER DASHBOARD</p>
+    <h1>Customer orders</h1>
+  </header>
+  @if (errorMessage) {
+    <p class="error-message" role="alert">{{ errorMessage }}</p>
+  }
+  @if (successMessage) {
+    <p class="success-message" role="status">{{ successMessage }}</p>
+  }
+  <form class="order-filters" (ngSubmit)="applyFilters()">
+    <label>
+      Search order or product
+      <input name="search" [(ngModel)]="searchText" placeholder="Order ID or product">
+    </label>
+    <label>
+      Status
+      <select name="status" [(ngModel)]="statusFilter">
+        <option value="">All statuses</option>
+        <option value="PLACED">Placed</option>
+        <option value="PROCESSING">Processing</option>
+        <option value="SHIPPED">Shipped</option>
+        <option value="DELIVERED">Delivered</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+    </label>
+    <label>From <input name="from" type="date" [(ngModel)]="fromDate"></label>
+    <label>To <input name="to" type="date" [(ngModel)]="toDate"></label>
+    <button class="filter-button" type="submit">Search</button>
+    <button class="filter-button secondary" type="button" (click)="clearFilters()">Clear</button>
+  </form>
+  @if (isLoading) {
+    <p role="status">Loading orders…</p>
+  } @else if (orders.length === 0) {
+    <section class="empty-state">You don’t have any product orders yet.</section>
+  } @else {
+    <div class="seller-order-list">
+      @for (order of orders; track order.id) {
+        <article class="seller-order">
+          <div>
+            <p class="order-id">Order #{{ order.id }}</p>
+            <h2>{{ order.status }}</h2>
+            <time>{{ order.createdAt | date:'medium' }}</time>
+          </div>
+          <ul>
+            @for (item of order.items; track item.productId) {
+              <li>{{ item.productName }} × {{ item.quantity }} — {{ item.lineTotal | number:'1.2-2' }}</li>
+            }
+          </ul>
+          <p class="total">Total to collect: <strong>{{ order.total | number:'1.2-2' }}</strong></p>
+          @if (nextStatus(order); as status) {
+            <button type="button" [disabled]="busyOrderId === order.id" (click)="advance(order)">
+              Mark {{ status.toLowerCase() }}
+            </button>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>

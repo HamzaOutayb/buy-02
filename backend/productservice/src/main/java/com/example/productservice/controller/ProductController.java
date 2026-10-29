@@ -1,7 +1,9 @@
 package com.example.productservice.controller;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.productservice.dto.ProductPageResponse;
 import com.example.productservice.dto.ProductRequest;
 import com.example.productservice.dto.ProductResponse;
+import com.example.productservice.dto.StockReservationRequest;
+import com.example.productservice.security.InternalServiceTokenValidator;
 import com.example.productservice.service.ProductService;
 import jakarta.validation.Valid;
 
@@ -22,9 +26,36 @@ import jakarta.validation.Valid;
 public class ProductController {
 
     private final ProductService productService;
+    private final InternalServiceTokenValidator internalTokenValidator;
 
-    public ProductController(ProductService productService) {
+    public ProductController(
+            ProductService productService,
+            InternalServiceTokenValidator internalTokenValidator) {
         this.productService = productService;
+        this.internalTokenValidator = internalTokenValidator;
+    }
+
+    @PostMapping("/{id}/reserve")
+    public ResponseEntity<ProductResponse> reserveStock(
+            @PathVariable String id,
+            @Valid @RequestBody StockReservationRequest request,
+            @RequestHeader(value = "X-Internal-Service-Token", required = false) String internalToken) {
+        if (!internalTokenValidator.isValid(internalToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(productService.reserveStock(id, request.quantity(), request.reservationId()));
+    }
+
+    @PostMapping("/{id}/release")
+    public ResponseEntity<Void> releaseStock(
+            @PathVariable String id,
+            @Valid @RequestBody StockReservationRequest request,
+            @RequestHeader(value = "X-Internal-Service-Token", required = false) String internalToken) {
+        if (!internalTokenValidator.isValid(internalToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        productService.releaseStock(id, request.reservationId());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping
