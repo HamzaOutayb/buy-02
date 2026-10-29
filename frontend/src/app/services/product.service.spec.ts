@@ -75,6 +75,37 @@ describe('ProductService', () => {
     expect(actualProducts[0]).toEqual(mockProduct);
   });
 
+  it('should search products with filters and pagination parameters', () => {
+    let actualPage: unknown;
+    productService.searchProducts({
+      q: 'keyboard',
+      category: 'Electronics',
+      page: 1,
+      size: 12
+    }).subscribe((page) => {
+      actualPage = page;
+    });
+
+    const req = httpTestingController.expectOne(
+      (request) => request.url === `${API_BASE_URL}/products/search`
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('q')).toBe('keyboard');
+    expect(req.request.params.get('category')).toBe('Electronics');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('size')).toBe('12');
+
+    const response = {
+      content: [mockProduct],
+      page: 1,
+      size: 12,
+      totalElements: 13,
+      totalPages: 2
+    };
+    req.flush(response);
+    expect(actualPage).toEqual(response);
+  });
+
   // =========================================================================
   // 2. getProduct(id)
   // =========================================================================

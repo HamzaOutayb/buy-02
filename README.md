@@ -54,10 +54,13 @@ The backend consists of the following components:
 
 ### Product Management
 - Browse available products.
+- Search products by name or description, filter by category and price range, sort results, and navigate paginated results.
 - Retrieve product details.
 - Create, update, and delete products.
 - Associate products with image URLs.
 - Protect seller operations according to the application's authorization rules.
+
+The public product search endpoint is `GET /products/search`. It accepts `q`, `category`, `page`, and `size` query parameters. Results are returned in a stable newest-first order. The existing `GET /products` endpoint remains available for the seller product view.
 
 ### Media Management
 - Upload product images.

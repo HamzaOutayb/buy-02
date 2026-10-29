@@ -1,16 +1,25 @@
 package com.example.productservice.service;
 
 import com.example.productservice.dto.ProductRequest;
+import com.example.productservice.dto.ProductPageResponse;
 import com.example.productservice.dto.ProductResponse;
 import com.example.productservice.exception.ForbiddenException;
+import com.example.productservice.exception.InvalidProductSearchException;
 import com.example.productservice.exception.ProductNotFoundException;
 import com.example.productservice.mapper.ProductMapper;
 import com.example.productservice.model.Product;
 import com.example.productservice.repository.ProductRepository;
 
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -19,18 +28,74 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final KafkaTemplate<String, ProductDeletedEvent> kafkaTemplate;
+    private final MongoTemplate mongoTemplate;
 
     public ProductService(ProductRepository productRepository, ProductMapper productMapper,
-            KafkaTemplate<String, ProductDeletedEvent> kafkaTemplate) {
+            KafkaTemplate<String, ProductDeletedEvent> kafkaTemplate,
+            MongoTemplate mongoTemplate) {
         this.productRepository = productRepository;
         this.productMapper = productMapper;
         this.kafkaTemplate = kafkaTemplate;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    public ProductPageResponse searchProducts(
+            String keyword,
+            String category,
+            int page,
+            int size) {
+        validateSearch(keyword, category, page, size);
+
+        List<Criteria> filters = new ArrayList<>();
+        if (keyword != null && !keyword.isBlank()) {
+            String safeKeyword = Pattern.quote(keyword.trim());
+            filters.add(new Criteria().orOperator(
+                    Criteria.where("name").regex(safeKeyword, "i"),
+                    Criteria.where("description").regex(safeKeyword, "i")));
+        }
+        if (category != null && !category.isBlank()) {
+            filters.add(Criteria.where("category").regex(
+                    "^" + Pattern.quote(category.trim()) + "$", "i"));
+        }
+        Query query = new Query();
+        if (!filters.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(filters.toArray(Criteria[]::new)));
+        }
+        Query countQuery = Query.of(query);
+        query.with(PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id")));
+
+        List<ProductResponse> products = mongoTemplate.find(query, Product.class).stream()
+                .map(productMapper::toResponse)
+                .toList();
+        long totalElements = mongoTemplate.count(countQuery, Product.class);
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+
+        return new ProductPageResponse(products, page, size, totalElements, totalPages);
+    }
+
+    private void validateSearch(
+            String keyword,
+            String category,
+            int page,
+            int size) {
+        if (keyword != null && keyword.length() > 100) {
+            throw new InvalidProductSearchException("Keyword must not exceed 100 characters");
+        }
+        if (category != null && category.length() > 50) {
+            throw new InvalidProductSearchException("Category must not exceed 50 characters");
+        }
+        if (page < 0) {
+            throw new InvalidProductSearchException("Page must be zero or greater");
+        }
+        if (size < 1 || size > 50) {
+            throw new InvalidProductSearchException("Page size must be between 1 and 50");
+        }
     }
 
     public ProductResponse getProductById(String id) {

@@ -11,6 +11,7 @@ public class ProductMapper {
         Product product = new Product();
         product.setName(request.getName());
         product.setDescription(request.getDescription());
+        product.setCategory(normalizeCategory(request.getCategory()));
         product.setPrice(request.getPrice());
         product.setQuantity(request.getQuantity());
         product.setImageUrls(request.getImageUrls());
@@ -20,6 +21,7 @@ public class ProductMapper {
     public void updateEntityFromRequest(Product product, ProductRequest request) {
         product.setName(request.getName());
         product.setDescription(request.getDescription());
+        product.setCategory(normalizeCategory(request.getCategory()));
         product.setPrice(request.getPrice());
         product.setQuantity(request.getQuantity());
         product.setImageUrls(request.getImageUrls());
@@ -30,10 +32,15 @@ public class ProductMapper {
         response.setId(product.getId());
         response.setName(product.getName());
         response.setDescription(product.getDescription());
+        response.setCategory(product.getCategory());
         response.setPrice(product.getPrice());
         response.setQuantity(product.getQuantity());
         response.setSellerId(product.getSellerId());
         response.setImageUrls(product.getImageUrls());
         return response;
+    }
+
+    private String normalizeCategory(String category) {
+        return category == null || category.isBlank() ? null : category.trim();
     }
 }

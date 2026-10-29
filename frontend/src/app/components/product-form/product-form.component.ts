@@ -45,6 +45,11 @@ readonly form = this.formBuilder.group({
     ]
   ],
 
+  category: [
+    '',
+    Validators.maxLength(50)
+  ],
+
   description: [
     '',
     Validators.maxLength(2000)
@@ -185,6 +190,7 @@ readonly form = this.formBuilder.group({
     const values = this.form.getRawValue();
     const product: ProductInput = {
       name: values.name.trim(),
+      category: values.category.trim(),
       description: values.description.trim(),
       price: values.price,
       quantity: values.quantity,
@@ -261,6 +267,7 @@ readonly form = this.formBuilder.group({
 
     this.form.patchValue({
       name: product.name,
+      category: product.category ?? '',
       description,
       price: product.price,
       quantity: product.quantity
