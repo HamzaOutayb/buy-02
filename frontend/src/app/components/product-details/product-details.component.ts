@@ -29,6 +29,16 @@ export class ProductDetailsComponent implements OnInit {
   cartMessage = '';
   isAddingToCart = false;
 
+  get authenticated(): boolean
+  {
+    return this.authService.isAuthenticated();
+  }
+
+  get canAddToCart(): boolean
+  {
+    return this.authenticated && this.authService.isClient();
+  }
+
   ngOnInit(): void
   {
     const productId = this.route.snapshot.paramMap.get('id');
@@ -82,8 +92,8 @@ export class ProductDetailsComponent implements OnInit {
       void this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
-    if (this.authService.isSeller() || !this.product || this.product.quantity < 1) {
-      this.cartMessage = 'Only buyers can add available products to a cart.';
+    if (!this.canAddToCart || !this.product || this.product.quantity < 1) {
+      this.cartMessage = 'Only clients can add available products to a cart.';
       return;
     }
     this.isAddingToCart = true;

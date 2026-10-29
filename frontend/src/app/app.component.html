@@ -7,7 +7,7 @@
         @if (seller) {
           <a class="nav-button" routerLink="/seller/products">Dashboard</a>
           <a class="nav-button" routerLink="/seller/orders">Orders</a>
-        } @else {
+        } @else if (client) {
           <a class="nav-button" routerLink="/products">Shop</a>
           <a class="nav-button" routerLink="/cart">Cart</a>
           <a class="nav-button" routerLink="/orders">Orders</a>

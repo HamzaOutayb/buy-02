@@ -9,27 +9,6 @@
   @if (successMessage) {
     <p class="success-message" role="status">{{ successMessage }}</p>
   }
-  <form class="order-filters" (ngSubmit)="applyFilters()">
-    <label>
-      Search order or product
-      <input name="search" [(ngModel)]="searchText" placeholder="Order ID or product">
-    </label>
-    <label>
-      Status
-      <select name="status" [(ngModel)]="statusFilter">
-        <option value="">All statuses</option>
-        <option value="PLACED">Placed</option>
-        <option value="PROCESSING">Processing</option>
-        <option value="SHIPPED">Shipped</option>
-        <option value="DELIVERED">Delivered</option>
-        <option value="CANCELLED">Cancelled</option>
-      </select>
-    </label>
-    <label>From <input name="from" type="date" [(ngModel)]="fromDate"></label>
-    <label>To <input name="to" type="date" [(ngModel)]="toDate"></label>
-    <button class="filter-button" type="submit">Search</button>
-    <button class="filter-button secondary" type="button" (click)="clearFilters()">Clear</button>
-  </form>
   @if (isLoading) {
     <p role="status">Loading orders…</p>
   } @else if (orders.length === 0) {

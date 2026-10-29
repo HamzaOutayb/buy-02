@@ -288,7 +288,10 @@
 }
 
 .add-to-cart-button {
+  display: inline-flex;
   min-height: 46px;
+  align-items: center;
+  justify-content: center;
   padding: 0 22px;
   border: 1px solid #142e33;
   background: #142e33;
@@ -297,6 +300,7 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .add-to-cart-button:disabled {

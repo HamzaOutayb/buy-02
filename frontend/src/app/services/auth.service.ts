@@ -60,4 +60,10 @@ export class AuthService {
     const role = this.userService.currentUser()?.role;
     return role === 'ROLE_SELLER' || role === 'SELLER';
   }
+
+  isClient(): boolean
+  {
+    const role = this.userService.currentUser()?.role;
+    return role === 'ROLE_CLIENT' || role === 'CLIENT';
+  }
 }

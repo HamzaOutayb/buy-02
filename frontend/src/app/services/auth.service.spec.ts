@@ -68,15 +68,25 @@ describe('AuthService', () => {
     expect(authService.isAuthenticated()).toBeFalse();
   });
 
-  it('identifies sellers from the loaded current user and rejects cleared users', () => {
+  it('identifies seller and client roles from the loaded user and rejects cleared users', () => {
     const userService = TestBed.inject(UserService);
     userService.getCurrentUser().subscribe();
     const request = httpTestingController.expectOne(`${API_BASE_URL}/me`);
     request.flush({ id: 'seller-1', name: 'Seller', email: 'seller@example.com', role: 'ROLE_SELLER', avatar: null });
 
     expect(authService.isSeller()).toBeTrue();
+    expect(authService.isClient()).toBeFalse();
 
     userService.clearCurrentUser();
+    expect(authService.isSeller()).toBeFalse();
+    expect(authService.isClient()).toBeFalse();
+
+    userService.getCurrentUser().subscribe();
+    httpTestingController.expectOne(`${API_BASE_URL}/me`).flush({
+      id: 'client-1', name: 'Client', email: 'client@example.com', role: 'ROLE_CLIENT', avatar: null
+    });
+
+    expect(authService.isClient()).toBeTrue();
     expect(authService.isSeller()).toBeFalse();
   });
 });

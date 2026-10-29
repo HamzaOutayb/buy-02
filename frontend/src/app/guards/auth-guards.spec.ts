@@ -11,6 +11,7 @@ import {
 } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { authGuard } from './auth.guard';
+import { buyerGuard } from './buyer.guard';
 import { sellerGuard } from './seller.guard';
 import { UserService } from '../services/user.service';
 
@@ -44,6 +45,32 @@ describe('route guards', () => {
     );
 
     expect(result).toBeTrue();
+  });
+
+  it('allows clients to access cart routes', async () => {
+    authService.isAuthenticated.and.returnValue(true);
+    userService.getCurrentUser.and.returnValue(of({
+      id: 'client-1', name: 'Client', email: 'client@example.com', role: 'ROLE_CLIENT', avatar: null
+    }));
+
+    const result = await firstValueFrom(TestBed.runInInjectionContext(() =>
+      buyerGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    ) as Observable<boolean | UrlTree>);
+
+    expect(result).toBeTrue();
+  });
+
+  it('denies sellers access to cart routes', async () => {
+    authService.isAuthenticated.and.returnValue(true);
+    userService.getCurrentUser.and.returnValue(of({
+      id: 'seller-1', name: 'Seller', email: 'seller@example.com', role: 'ROLE_SELLER', avatar: null
+    }));
+
+    const result = await firstValueFrom(TestBed.runInInjectionContext(() =>
+      buyerGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
+    ) as Observable<boolean | UrlTree>);
+
+    expect(router.serializeUrl(result as UrlTree)).toBe('/profile');
   });
 
   it('redirects unauthenticated users to sign in', () => {

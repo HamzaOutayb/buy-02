@@ -46,7 +46,7 @@ describe('ProductDetailsComponent', () => {
   async function setupTestingModule(routeId: string | null) {
     productServiceSpy = jasmine.createSpyObj<ProductService>('ProductService', ['getProduct']);
     cartServiceSpy = jasmine.createSpyObj<CartService>('CartService', ['addItem']);
-    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'isSeller']);
+    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['isAuthenticated', 'isClient']);
 
     await TestBed.configureTestingModule({
       imports: [ProductDetailsComponent],
@@ -169,7 +169,7 @@ describe('ProductDetailsComponent', () => {
     await setupTestingModule('prod-123');
     productServiceSpy.getProduct.and.returnValue(of(mockProduct));
     authServiceSpy.isAuthenticated.and.returnValue(true);
-    authServiceSpy.isSeller.and.returnValue(false);
+    authServiceSpy.isClient.and.returnValue(true);
     cartServiceSpy.addItem.and.returnValue(of({ items: [], subtotal: 0 }));
     fixture.detectChanges();
 
@@ -177,5 +177,19 @@ describe('ProductDetailsComponent', () => {
 
     expect(cartServiceSpy.addItem).toHaveBeenCalledWith('prod-123');
     expect(component.cartMessage).toBe('Added to your cart.');
+  });
+
+  it('does not add products to the cart for non-client accounts', async () => {
+    await setupTestingModule('prod-123');
+    productServiceSpy.getProduct.and.returnValue(of(mockProduct));
+    authServiceSpy.isAuthenticated.and.returnValue(true);
+    authServiceSpy.isClient.and.returnValue(false);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.add-to-cart-button')).toBeNull();
+    component.addToCart();
+
+    expect(cartServiceSpy.addItem).not.toHaveBeenCalled();
+    expect(component.cartMessage).toBe('Only clients can add available products to a cart.');
   });
 });
