@@ -34,6 +34,7 @@ class ApiGatewayApplicationTests {
 
 		assertNotNull(configuration);
 		assertTrue(configuration.getAllowedMethods().contains("OPTIONS"));
+		assertTrue(configuration.getAllowedMethods().contains("PATCH"));
 		assertTrue(configuration.getAllowCredentials());
 	}
 

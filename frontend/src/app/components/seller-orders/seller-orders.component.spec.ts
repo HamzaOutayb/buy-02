@@ -2,7 +2,7 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { Order } from '../../models/order.model';
+import { Order, OrderStatus } from '../../models/order.model';
 import { OrderService } from '../../services/order.service';
 import { SellerOrdersComponent } from './seller-orders.component';
 
@@ -85,5 +85,37 @@ describe('SellerOrdersComponent', () => {
     component.categoryFilter = 'lighting';
 
     expect(component.filteredOrders.map((order) => order.id)).toEqual(['order-2']);
+  });
+
+  it('only enables the next valid seller status for an order', () => {
+    const allowedStatuses: Record<OrderStatus, OrderStatus | null> = {
+      PLACED: 'PROCESSING',
+      PROCESSING: 'SHIPPED',
+      SHIPPED: 'DELIVERED',
+      DELIVERED: null,
+      CANCELLED: null
+    };
+
+    for (const order of orders) {
+      const allowedStatus = allowedStatuses[order.status];
+      for (const status of component.statusOptions) {
+        expect(component.canSetStatus(order, status)).toBe(status === allowedStatus);
+      }
+    }
+  });
+
+  it('saves the selected valid status for an order', () => {
+    const updatedOrder: Order = { ...orders[0], status: 'PROCESSING' };
+    orderServiceSpy.updateStatus.and.returnValue(of(updatedOrder));
+    component.selectedStatuses[orders[0].id] = 'PROCESSING';
+
+    component.updateStatus(orders[0]);
+
+    expect(orderServiceSpy.updateStatus).toHaveBeenCalledWith(
+      orders[0].id,
+      'PROCESSING'
+    );
+    expect(component.orders[0].status).toBe('PROCESSING');
+    expect(component.selectedStatuses[orders[0].id]).toBe('');
   });
 });

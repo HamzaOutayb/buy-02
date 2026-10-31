@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 import com.example.productservice.dto.ProductRequest;
 import com.example.productservice.dto.ProductResponse;
@@ -119,6 +121,37 @@ class ProductServiceTest {
                         null, null, 0, 0));
 
         verify(mongoTemplate, never()).find(any(Query.class), eq(Product.class));
+    }
+
+    @Test
+    void releaseStockRestoresReservedQuantityAndRemovesReservation() {
+        product.setQuantity(2);
+        product.getStockReservations().put("reservation-1", 3);
+        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+
+        productService.releaseStock(product.getId(), "reservation-1");
+
+        ArgumentCaptor<Query> query = ArgumentCaptor.forClass(Query.class);
+        ArgumentCaptor<Update> update = ArgumentCaptor.forClass(Update.class);
+        verify(mongoTemplate).updateFirst(query.capture(), update.capture(), eq(Product.class));
+        assertThat(query.getValue().getQueryObject().toJson())
+                .contains("reservation-1")
+                .contains("3");
+        assertThat(update.getValue().getUpdateObject().toJson())
+                .contains("$inc")
+                .contains("quantity")
+                .contains("$unset")
+                .contains("stockReservations.reservation-1");
+    }
+
+    @Test
+    void releaseStockIsIdempotentWhenReservationWasAlreadyReleased() {
+        when(productRepository.findById(product.getId())).thenReturn(Optional.of(product));
+
+        productService.releaseStock(product.getId(), "unknown-reservation");
+
+        verify(mongoTemplate, never()).updateFirst(
+                any(Query.class), any(Update.class), eq(Product.class));
     }
 
     @Test

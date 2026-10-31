@@ -12,12 +12,6 @@
   @if (errorMessage) {
     <p class="orders-error" role="alert">{{ errorMessage }}</p>
   }
-  @if (successMessage) {
-    <p class="orders-success" role="status">
-      {{ successMessage }} <a routerLink="/cart">View cart</a>
-    </p>
-  }
-
   @if (isLoading) {
     <p role="status">Loading orders…</p>
   } @else if (selectedOrder) {
@@ -28,6 +22,17 @@
           <h2>{{ selectedOrder.status }}</h2>
         </div>
         <time>{{ selectedOrder.createdAt | date:'medium' }}</time>
+      </div>
+      <div class="status-refresh-note">
+        <span role="status">Order status refreshes automatically.</span>
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="busyOrderId === selectedOrder.id"
+          (click)="refreshOrderStatus()"
+        >
+          Refresh now
+        </button>
       </div>
       <div class="order-timeline" aria-label="Order status">
         @for (step of ['PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED']; track step) {
@@ -60,9 +65,6 @@
             Remove from history
           </button>
         }
-        <button type="button" class="secondary-button" [disabled]="busyOrderId === selectedOrder.id" (click)="reorder(selectedOrder)">
-          Reorder
-        </button>
       </div>
       <a routerLink="/orders">Back to order history</a>
     </article>
@@ -110,6 +112,17 @@
       <button type="submit" class="filter-button">Apply filters</button>
       <button type="button" class="filter-button secondary" (click)="clearFilters()">Clear</button>
     </form>
+    <div class="status-refresh-note">
+      <span role="status">Order statuses refresh automatically.</span>
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="isLoading || isOrderBusy"
+        (click)="refreshOrderStatus()"
+      >
+        Refresh now
+      </button>
+    </div>
 
     @if (filteredOrders.length === 0) {
       <section class="orders-empty">
@@ -145,7 +158,6 @@
               @if (order.status === 'CANCELLED' || order.status === 'DELIVERED') {
                 <button type="button" class="danger-button" [disabled]="busyOrderId === order.id" (click)="archive(order)">Remove</button>
               }
-              <button type="button" class="secondary-button" [disabled]="busyOrderId === order.id" (click)="reorder(order)">Reorder</button>
             </div>
           </article>
         }

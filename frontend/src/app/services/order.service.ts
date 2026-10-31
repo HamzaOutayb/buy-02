@@ -43,14 +43,6 @@ export class OrderService {
     return this.http.delete<void>(`${API_BASE_URL}/orders/${encodeURIComponent(orderId)}`);
   }
 
-  reorder(orderId: string): Observable<void>
-  {
-    return this.http.post<void>(
-      `${API_BASE_URL}/orders/${encodeURIComponent(orderId)}/reorder`,
-      {}
-    );
-  }
-
   getSellerOrders(filters: OrderSearchFilters): Observable<Order[]>
   {
     return this.http.get<Order[]>(`${API_BASE_URL}/seller/orders`, { params: this.queryParams(filters) });

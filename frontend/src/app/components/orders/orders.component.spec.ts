@@ -68,7 +68,7 @@ describe('OrdersComponent', () => {
   beforeEach(async () => {
     orderServiceSpy = jasmine.createSpyObj<OrderService>(
       'OrderService',
-      ['getBuyerOrders', 'getOrder', 'cancelOrder', 'archiveOrder', 'reorder']
+      ['getBuyerOrders', 'getOrder', 'cancelOrder', 'archiveOrder']
     );
     orderServiceSpy.getBuyerOrders.and.returnValue(of(orders));
 
@@ -89,5 +89,27 @@ describe('OrdersComponent', () => {
     component.categoryFilter = ' home ';
 
     expect(component.filteredOrders.map((order) => order.id)).toEqual(['order-1']);
+  });
+
+  it('refreshes current order statuses for the customer order list', () => {
+    const updatedOrders = [{ ...orders[0], status: 'PROCESSING' as const }, orders[1]];
+    orderServiceSpy.getBuyerOrders.and.returnValue(of(updatedOrders));
+
+    component.refreshOrderStatus();
+
+    expect(component.orders[0].status).toBe('PROCESSING');
+  });
+
+  it('refreshes an opened customer order detail', () => {
+    component.selectedOrder = orders[0];
+    orderServiceSpy.getOrder.and.returnValue(of({
+      ...orders[0],
+      status: 'SHIPPED'
+    }));
+
+    component.refreshOrderStatus();
+
+    expect(orderServiceSpy.getOrder).toHaveBeenCalledWith('order-1');
+    expect(component.selectedOrder?.status).toBe('SHIPPED');
   });
 });

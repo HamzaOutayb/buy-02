@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Subscription, timer } from 'rxjs';
 import { getApiErrorMessage } from '../../helpers/api-error-message';
 import { Order } from '../../models/order.model';
 import { OrderSearchFilters, OrderService } from '../../services/order.service';
@@ -14,7 +15,7 @@ import { OrderSearchFilters, OrderService } from '../../services/order.service';
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css'
 })
-export class OrdersComponent implements OnInit {
+export class OrdersComponent implements OnDestroy, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly orderService = inject(OrderService);
@@ -24,12 +25,12 @@ export class OrdersComponent implements OnInit {
   isLoading = true;
   busyOrderId = '';
   errorMessage = '';
-  successMessage = '';
   searchText = '';
   categoryFilter = '';
   statusFilter = '';
   fromDate = '';
   toDate = '';
+  private statusRefreshSubscription: Subscription | null = null;
 
   get filteredOrders(): Order[]
   {
@@ -45,6 +46,11 @@ export class OrdersComponent implements OnInit {
     );
   }
 
+  get isOrderBusy(): boolean
+  {
+    return Boolean(this.busyOrderId);
+  }
+
   ngOnInit(): void
   {
     const orderId = this.route.snapshot.paramMap.get('orderId');
@@ -53,6 +59,50 @@ export class OrdersComponent implements OnInit {
     } else {
       this.loadOrders();
     }
+    this.statusRefreshSubscription = timer(15000, 15000).subscribe(() => {
+      this.refreshOrderStatus();
+    });
+  }
+
+  ngOnDestroy(): void
+  {
+    this.statusRefreshSubscription?.unsubscribe();
+  }
+
+  refreshOrderStatus(): void
+  {
+    if (this.isLoading || this.busyOrderId) {
+      return;
+    }
+
+    this.errorMessage = '';
+    const selectedOrderId = this.selectedOrder?.id;
+    if (selectedOrderId) {
+      this.orderService.getOrder(selectedOrderId).subscribe({
+        next: (order) => {
+          this.selectedOrder = order;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.errorMessage = getApiErrorMessage(
+            error,
+            'The latest order status could not be loaded.'
+          );
+        }
+      });
+      return;
+    }
+
+    this.orderService.getBuyerOrders(this.filters()).subscribe({
+      next: (orders) => {
+        this.orders = orders;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.errorMessage = getApiErrorMessage(
+          error,
+          'The latest order statuses could not be loaded.'
+        );
+      }
+    });
   }
 
   loadOrders(): void
@@ -119,22 +169,6 @@ export class OrdersComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = getApiErrorMessage(error, 'This order could not be removed.');
-        this.busyOrderId = '';
-      }
-    });
-  }
-
-  reorder(order: Order): void
-  {
-    this.busyOrderId = order.id;
-    this.errorMessage = '';
-    this.orderService.reorder(order.id).subscribe({
-      next: () => {
-        this.busyOrderId = '';
-        this.successMessage = 'Available items were added to your cart.';
-      },
-      error: (error: HttpErrorResponse) => {
-        this.errorMessage = getApiErrorMessage(error, 'This order could not be reordered.');
         this.busyOrderId = '';
       }
     });

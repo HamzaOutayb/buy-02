@@ -162,49 +162,21 @@ public class OrderService {
         if (!order.getSellerId().equals(sellerId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You cannot update this order");
         }
+
         OrderStatus expectedNext = switch (order.getStatus()) {
             case PLACED -> OrderStatus.PROCESSING;
             case PROCESSING -> OrderStatus.SHIPPED;
             case SHIPPED -> OrderStatus.DELIVERED;
             default -> null;
         };
+
         if (expectedNext == null || expectedNext != nextStatus) {
             throw new ApiException(HttpStatus.CONFLICT, "Invalid order status transition");
         }
+
         order.setStatus(nextStatus);
         order.setUpdatedAt(Instant.now());
         return toResponse(orderRepository.save(order));
-    }
-
-    public void reorder(String orderId, String buyerId, String authorization) {
-        Order order = findOrder(orderId);
-        if (!order.getBuyerId().equals(buyerId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "You cannot reorder this order");
-        }
-        Cart cart = cartRepository.findByBuyerId(buyerId).orElseGet(() -> {
-            Cart created = new Cart();
-            created.setBuyerId(buyerId);
-            created.setItems(new ArrayList<>());
-            return created;
-        });
-        for (Order.OrderItem item : order.getItems()) {
-            Cart.CartLine line = cart.getItems().stream()
-                    .filter(existing -> existing.getProductId().equals(item.getProductId()))
-                    .findFirst()
-                    .orElse(null);
-            int requestedQuantity = item.getQuantity() + (line == null ? 0 : line.getQuantity());
-            ProductSummary product = productClient.getProduct(item.getProductId(), authorization);
-            if (product.quantity() == null || requestedQuantity > product.quantity()) {
-                throw new ApiException(HttpStatus.CONFLICT, "Current stock is insufficient for " + product.name());
-            }
-            if (line == null) {
-                cart.getItems().add(new Cart.CartLine(item.getProductId(), item.getQuantity()));
-            } else {
-                line.setQuantity(requestedQuantity);
-            }
-        }
-        cart.setUpdatedAt(Instant.now());
-        cartRepository.save(cart);
     }
 
     private ProductSummary reserve(Cart.CartLine line, String reservationId) {

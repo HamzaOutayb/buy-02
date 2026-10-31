@@ -26,6 +26,14 @@ export class SellerOrdersComponent implements OnInit {
   statusFilter = '';
   fromDate = '';
   toDate = '';
+  readonly statusOptions: OrderStatus[] = [
+    'PLACED',
+    'PROCESSING',
+    'SHIPPED',
+    'DELIVERED',
+    'CANCELLED'
+  ];
+  selectedStatuses: Record<string, OrderStatus | ''> = {};
 
   get filteredOrders(): Order[]
   {
@@ -53,6 +61,10 @@ export class SellerOrdersComponent implements OnInit {
     this.orderService.getSellerOrders(this.filters()).subscribe({
       next: (orders) => {
         this.orders = orders;
+        this.selectedStatuses = {};
+        for (const order of orders) {
+          this.selectedStatuses[order.id] = '';
+        }
         this.isLoading = false;
       },
       error: (error: HttpErrorResponse) => {
@@ -87,17 +99,24 @@ export class SellerOrdersComponent implements OnInit {
     }
   }
 
-  advance(order: Order): void
+  canSetStatus(order: Order, status: OrderStatus): boolean
   {
-    const status = this.nextStatus(order);
-    if (!status) {
+    return this.nextStatus(order) === status;
+  }
+
+  updateStatus(order: Order): void
+  {
+    const status = this.selectedStatuses[order.id];
+    if (!status || !this.canSetStatus(order, status)) {
       return;
     }
+
     this.busyOrderId = order.id;
     this.errorMessage = '';
     this.orderService.updateStatus(order.id, status).subscribe({
       next: (updated) => {
         this.orders = this.orders.map((item) => item.id === updated.id ? updated : item);
+        this.selectedStatuses[order.id] = '';
         this.busyOrderId = '';
         this.successMessage = `Order moved to ${updated.status}.`;
       },

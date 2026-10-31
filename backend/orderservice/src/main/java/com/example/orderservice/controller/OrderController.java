@@ -61,11 +61,4 @@ public class OrderController {
         orderService.archiveOrder(orderId, authentication.getName());
     }
 
-    @PostMapping("/{orderId}/reorder")
-    public void reorder(
-            @PathVariable String orderId,
-            Authentication authentication,
-            @RequestHeader(HttpHeaders.AUTHORIZATION) String token) {
-        orderService.reorder(orderId, authentication.getName(), token);
-    }
 }

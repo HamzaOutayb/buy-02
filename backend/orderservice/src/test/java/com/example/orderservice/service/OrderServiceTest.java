@@ -122,6 +122,50 @@ class OrderServiceTest {
         verifyNoInteractions(productClient);
     }
 
+    @Test
+    void cancellingPlacedOrderReleasesEveryReservedItemAndPersistsCancelledStatus() {
+        Order order = existingOrder();
+        order.setItems(List.of(
+                orderItem("product-1", "reservation-1"),
+                orderItem("product-2", "reservation-2")));
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = orderService.cancelOrder(order.getId(), order.getBuyerId());
+
+        assertThat(result.status()).isEqualTo(OrderStatus.CANCELLED);
+        verify(productClient).release("product-1", "reservation-1");
+        verify(productClient).release("product-2", "reservation-2");
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void sellerStatusUpdatePersistsStatusReturnedToCustomer() {
+        Order order = existingOrder();
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = orderService.updateSellerStatus(
+                order.getId(), order.getSellerId(), OrderStatus.PROCESSING);
+
+        assertThat(result.status()).isEqualTo(OrderStatus.PROCESSING);
+        assertThat(orderService.getOrder(order.getId(), order.getBuyerId()).status())
+                .isEqualTo(OrderStatus.PROCESSING);
+        verify(orderRepository).save(order);
+    }
+
+    @Test
+    void cannotCancelOrderAfterSellerStartsProcessing() {
+        Order order = existingOrder();
+        order.setStatus(OrderStatus.PROCESSING);
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.cancelOrder(order.getId(), order.getBuyerId()))
+                .isInstanceOf(ApiException.class);
+        verifyNoInteractions(productClient);
+        verify(orderRepository, never()).save(any(Order.class));
+    }
+
     private Order saveWithId(InvocationOnMock invocation) {
         Order saved = invocation.getArgument(0);
         saved.setId("order-1");
@@ -138,5 +182,11 @@ class OrderServiceTest {
         order.setTotal(BigDecimal.valueOf(20));
         order.setStatus(OrderStatus.PLACED);
         return order;
+    }
+
+    private Order.OrderItem orderItem(String productId, String reservationId) {
+        return new Order.OrderItem(
+                productId, "Product", "general", "seller-1", reservationId,
+                BigDecimal.TEN, 1, BigDecimal.TEN);
     }
 }

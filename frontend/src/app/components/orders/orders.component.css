@@ -89,6 +89,16 @@
   text-align: center;
 }
 
+.status-refresh-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -7px 0 14px;
+  color: #647377;
+  font-size: 11px;
+}
+
 .order-title {
   display: flex;
   align-items: start;
@@ -201,8 +211,4 @@
 
 .orders-error {
   color: #a04436;
-}
-
-.orders-success {
-  color: #367560;
 }

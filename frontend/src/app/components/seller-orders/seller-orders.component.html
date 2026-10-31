@@ -79,11 +79,30 @@
               }
             </ul>
             <p class="total">Total to collect: <strong>{{ order.total | number:'1.2-2' }}</strong></p>
-            @if (nextStatus(order); as status) {
-              <button type="button" [disabled]="busyOrderId === order.id" (click)="advance(order)">
-                Mark {{ status.toLowerCase() }}
+            <div class="status-actions">
+              <label>
+                Update status
+                <select
+                  [name]="'order-status-' + order.id"
+                  [(ngModel)]="selectedStatuses[order.id]"
+                  [disabled]="busyOrderId === order.id || !nextStatus(order)"
+                >
+                  <option value="">Select status</option>
+                  @for (status of statusOptions; track status) {
+                    <option [value]="status" [disabled]="!canSetStatus(order, status)">
+                      {{ status }}
+                    </option>
+                  }
+                </select>
+              </label>
+              <button
+                type="button"
+                [disabled]="busyOrderId === order.id || !selectedStatuses[order.id]"
+                (click)="updateStatus(order)"
+              >
+                Save status
               </button>
-            }
+            </div>
           </article>
         }
       </div>

@@ -67,7 +67,7 @@ The public product search endpoint is `GET /products/search`. It accepts `q`, `c
 ### Cart and Orders
 - Add available products to a buyer cart, update quantities, and remove items.
 - Checkout with a delivery address and Pay on Delivery. The Orders Service snapshots product prices and details and splits multi-seller checkouts into seller-scoped orders.
-- Track order status, search/filter order history by text, status, and date, cancel placed orders, and reorder previous purchases.
+- Track order status, search/filter order history by text, and cancel placed orders.
 - Sellers can list their related orders and advance them through `PROCESSING`, `SHIPPED`, and `DELIVERED`.
 - Product stock is reserved atomically during checkout and returned when a placed order is cancelled.
 

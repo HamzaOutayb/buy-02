@@ -110,6 +110,36 @@
   cursor: pointer;
 }
 
+.status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+
+.status-actions label {
+  display: grid;
+  gap: 5px;
+  color: #647377;
+  font-size: 10px;
+}
+
+.status-actions select {
+  min-width: 160px;
+  min-height: 38px;
+  padding: 0 9px;
+  border: 1px solid #deded5;
+  background: #fff;
+  color: #142e33;
+  font: inherit;
+  font-size: 12px;
+}
+
+.seller-order .status-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .error-message {
   color: #a04436;
 }
