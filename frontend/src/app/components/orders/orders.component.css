@@ -61,6 +61,22 @@
   font: inherit;
 }
 
+.filter-button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #142e33;
+  background: #142e33;
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.filter-button.secondary {
+  background: #fff;
+  color: #142e33;
+}
+
 .order-card,
 .orders-empty {
   padding: 20px;

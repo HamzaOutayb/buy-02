@@ -1,6 +1,2 @@
-fix overflowing in the front end inputs products 
 
-change two requests into three front end -> product HTTP -> media so the productid will be stored in the database of media and product
-
-do some pull requests
-
+understand the order service 4:10

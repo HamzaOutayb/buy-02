@@ -36,6 +36,7 @@ describe('SellerProductsComponent', () => {
     id: 'prod-1',
     name: 'Handmade Mug',
     description: 'Ceramic mug',
+    category: 'Home',
     price: 15.00,
     quantity: 10,
     sellerId: 'seller-123', // Matches mockUser.id
@@ -46,6 +47,7 @@ describe('SellerProductsComponent', () => {
     id: 'prod-2',
     name: 'Leather Belt',
     description: 'Genuine leather',
+    category: 'Accessories',
     price: 35.00,
     quantity: 5,
     sellerId: 'seller-999', // Belongs to someone else
@@ -110,6 +112,36 @@ describe('SellerProductsComponent', () => {
     expect(component.isLoading).toBeFalse();
     expect(component.errorMessage).toBeTruthy();
     expect(productServiceSpy.getProducts).not.toHaveBeenCalled();
+  });
+
+  it('should filter the seller inventory by name and category', () => {
+    userServiceSpy.getCurrentUser.and.returnValue(of(mockUser));
+    productServiceSpy.getProducts.and.returnValue(of([
+      sellerProduct,
+      {
+        ...sellerProduct,
+        id: 'prod-3',
+        name: 'Glass Vase',
+        category: 'Decor'
+      },
+      otherSellerProduct
+    ]));
+    fixture.detectChanges();
+
+    component.searchTerm = 'mug';
+    expect(component.filteredProducts).toEqual([sellerProduct]);
+
+    component.searchTerm = '';
+    component.category = 'decor';
+    expect(component.filteredProducts.map((product) => product.name)).toEqual([
+      'Glass Vase'
+    ]);
+
+    component.clearFilters();
+    expect(component.filteredProducts.map((product) => product.id)).toEqual([
+      'prod-1',
+      'prod-3'
+    ]);
   });
 
   // =========================================================================

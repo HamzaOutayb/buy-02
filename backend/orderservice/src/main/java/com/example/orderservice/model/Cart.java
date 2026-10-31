@@ -20,12 +20,15 @@ public class Cart {
     private String buyerId;
 
     private List<CartLine> items = new ArrayList<>();
+    
     private Instant updatedAt = Instant.now();
 
     @Data
     @NoArgsConstructor
     public static class CartLine {
+        // Product ID of the item in the cart
         private String productId;
+        // Quantity of the item in the cart
         private int quantity;
 
         public CartLine(String productId, int quantity) {

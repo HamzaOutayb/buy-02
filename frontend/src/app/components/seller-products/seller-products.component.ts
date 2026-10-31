@@ -1,5 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { getApiErrorMessage } from '../../helpers/api-error-message';
 import { Product } from '../../models/product.model';
@@ -9,7 +10,7 @@ import { UserService } from '../../services/user.service';
 @Component({
   selector: 'app-seller-products',
   standalone: true,
-  imports: [RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './seller-products.component.html',
   styleUrl: './seller-products.component.css'
 })
@@ -24,6 +25,25 @@ export class SellerProductsComponent implements OnInit {
   errorMessage = '';
   totalUnits = 0;
   availableCount = 0;
+  searchTerm = '';
+  category = '';
+
+  get filteredProducts(): Product[]
+  {
+    const searchTerm = this.searchTerm.trim().toLowerCase();
+    const category = this.category.trim().toLowerCase();
+
+    return this.products.filter((product) =>
+      (!searchTerm || product.name.toLowerCase().includes(searchTerm)) &&
+      (!category || (product.category ?? '').trim().toLowerCase() === category)
+    );
+  }
+
+  clearFilters(): void
+  {
+    this.searchTerm = '';
+    this.category = '';
+  }
 
   ngOnInit(): void
   {

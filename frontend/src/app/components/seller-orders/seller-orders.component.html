@@ -11,30 +11,82 @@
   }
   @if (isLoading) {
     <p role="status">Loading orders…</p>
-  } @else if (orders.length === 0) {
-    <section class="empty-state">You don’t have any product orders yet.</section>
   } @else {
-    <div class="seller-order-list">
-      @for (order of orders; track order.id) {
-        <article class="seller-order">
-          <div>
-            <p class="order-id">Order #{{ order.id }}</p>
-            <h2>{{ order.status }}</h2>
-            <time>{{ order.createdAt | date:'medium' }}</time>
-          </div>
-          <ul>
-            @for (item of order.items; track item.productId) {
-              <li>{{ item.productName }} × {{ item.quantity }} — {{ item.lineTotal | number:'1.2-2' }}</li>
+    <form class="order-filters" (ngSubmit)="applyFilters()" aria-label="Search and filter seller orders">
+      <label>
+        Search orders
+        <input
+          type="search"
+          name="searchText"
+          [(ngModel)]="searchText"
+          maxlength="100"
+          placeholder="Order ID or product name"
+        >
+      </label>
+      <label>
+        Category
+        <input
+          type="search"
+          name="categoryFilter"
+          [(ngModel)]="categoryFilter"
+          maxlength="50"
+          placeholder="Enter a product category"
+        >
+      </label>
+      <label>
+        Status
+        <select name="statusFilter" [(ngModel)]="statusFilter">
+          <option value="">All statuses</option>
+          <option value="PLACED">Placed</option>
+          <option value="PROCESSING">Processing</option>
+          <option value="SHIPPED">Shipped</option>
+          <option value="DELIVERED">Delivered</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </label>
+      <label>
+        From
+        <input type="date" name="fromDate" [(ngModel)]="fromDate">
+      </label>
+      <label>
+        To
+        <input type="date" name="toDate" [(ngModel)]="toDate">
+      </label>
+      <button type="submit" class="filter-button">Apply filters</button>
+      <button type="button" class="filter-button secondary" (click)="clearFilters()">Clear</button>
+    </form>
+
+    @if (filteredOrders.length === 0) {
+      <section class="empty-state">
+        @if (orders.length === 0) {
+          You don’t have any product orders yet.
+        } @else {
+          No orders match those filters. Try another keyword or category.
+        }
+      </section>
+    } @else {
+      <div class="seller-order-list">
+        @for (order of filteredOrders; track order.id) {
+          <article class="seller-order">
+            <div>
+              <p class="order-id">Order #{{ order.id }}</p>
+              <h2>{{ order.status }}</h2>
+              <time>{{ order.createdAt | date:'medium' }}</time>
+            </div>
+            <ul>
+              @for (item of order.items; track item.productId) {
+                <li>{{ item.productName }} × {{ item.quantity }} — {{ item.lineTotal | number:'1.2-2' }}</li>
+              }
+            </ul>
+            <p class="total">Total to collect: <strong>{{ order.total | number:'1.2-2' }}</strong></p>
+            @if (nextStatus(order); as status) {
+              <button type="button" [disabled]="busyOrderId === order.id" (click)="advance(order)">
+                Mark {{ status.toLowerCase() }}
+              </button>
             }
-          </ul>
-          <p class="total">Total to collect: <strong>{{ order.total | number:'1.2-2' }}</strong></p>
-          @if (nextStatus(order); as status) {
-            <button type="button" [disabled]="busyOrderId === order.id" (click)="advance(order)">
-              Mark {{ status.toLowerCase() }}
-            </button>
-          }
-        </article>
-      }
-    </div>
+          </article>
+        }
+      </div>
+    }
   }
 </section>

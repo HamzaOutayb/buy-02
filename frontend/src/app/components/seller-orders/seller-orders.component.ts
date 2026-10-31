@@ -22,9 +22,24 @@ export class SellerOrdersComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   searchText = '';
+  categoryFilter = '';
   statusFilter = '';
   fromDate = '';
   toDate = '';
+
+  get filteredOrders(): Order[]
+  {
+    const category = this.categoryFilter.trim().toLowerCase();
+    if (!category) {
+      return this.orders;
+    }
+
+    return this.orders.filter((order) =>
+      order.items.some((item) =>
+        (item.category ?? '').trim().toLowerCase() === category
+      )
+    );
+  }
 
   ngOnInit(): void
   {
@@ -55,6 +70,7 @@ export class SellerOrdersComponent implements OnInit {
   clearFilters(): void
   {
     this.searchText = '';
+    this.categoryFilter = '';
     this.statusFilter = '';
     this.fromDate = '';
     this.toDate = '';

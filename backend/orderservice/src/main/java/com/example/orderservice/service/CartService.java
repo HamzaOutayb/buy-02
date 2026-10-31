@@ -60,6 +60,12 @@ public class CartService {
         if (product.quantity() == null || quantity > product.quantity()) {
             throw new ApiException(HttpStatus.CONFLICT, "Requested quantity exceeds available stock");
         }
+        if (quantity <= 0) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    "Quantity must be greater than zero");
+        }
+        
         Cart cart = requireCart(buyerId);
         Cart.CartLine line = findLine(cart, productId);
         line.setQuantity(quantity);
