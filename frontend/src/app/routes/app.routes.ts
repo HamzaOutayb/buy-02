@@ -8,6 +8,11 @@ import { ProductFormComponent } from '../components/product-form/product-form.co
 import { SellerProductsComponent } from '../components/seller-products/seller-products.component';
 import { ProductDetailsComponent } from '../components/product-details/product-details.component';
 import { sellerGuard } from '../guards/seller.guard';
+import { buyerGuard } from '../guards/buyer.guard';
+import { CartComponent } from '../components/cart/cart.component';
+import { CheckoutComponent } from '../components/checkout/checkout.component';
+import { OrdersComponent } from '../components/orders/orders.component';
+import { SellerOrdersComponent } from '../components/seller-orders/seller-orders.component';
 
 export const routes: Routes = [
   {
@@ -35,6 +40,31 @@ export const routes: Routes = [
     path: 'profile',
     component: ProfileComponent,
     canActivate: [authGuard]
+  },
+  {
+    path: 'cart',
+    component: CartComponent,
+    canActivate: [buyerGuard]
+  },
+  {
+    path: 'checkout',
+    component: CheckoutComponent,
+    canActivate: [buyerGuard]
+  },
+  {
+    path: 'orders',
+    component: OrdersComponent,
+    canActivate: [buyerGuard]
+  },
+  {
+    path: 'orders/:orderId',
+    component: OrdersComponent,
+    canActivate: [buyerGuard]
+  },
+  {
+    path: 'seller/orders',
+    component: SellerOrdersComponent,
+    canActivate: [sellerGuard]
   },
   {
     path: 'seller/products',

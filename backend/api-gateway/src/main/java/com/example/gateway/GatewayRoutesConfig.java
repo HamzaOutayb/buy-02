@@ -29,6 +29,14 @@ public class GatewayRoutesConfig {
                         .route(RequestPredicates.path("/media/images"), http())
                         .route(RequestPredicates.path("/media/images/**"), http())
                         .filter(lb("media-service"))
+                        .build())
+                .and(route("orderservice")
+                        .route(RequestPredicates.path("/cart"), http())
+                        .route(RequestPredicates.path("/cart/**"), http())
+                        .route(RequestPredicates.path("/orders"), http())
+                        .route(RequestPredicates.path("/orders/**"), http())
+                        .route(RequestPredicates.path("/seller/orders/**"), http())
+                        .filter(lb("orderservice"))
                         .build());
     }
 }

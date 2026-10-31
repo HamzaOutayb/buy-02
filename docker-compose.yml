@@ -24,7 +24,19 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-  
+
+  order-mongodb:
+    image: mongo:7.0.14
+    container_name: order-service-mongodb
+    volumes:
+      - order_mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand('ping').ok", "localhost:27017/test"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   media-mongodb:
     image: mongo:7.0.14
     container_name: media-service-mongodb
@@ -109,6 +121,7 @@ services:
     environment:
       SPRING_MONGODB_URI: mongodb://product-mongodb:27017/product-service-db
       JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-key-which-is-long-enough}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-development-internal-service-token}
       KAFKA_BOOTSTRAP_SERVERS: kafka:19092
     depends_on:
       product-mongodb:
@@ -123,6 +136,33 @@ services:
       timeout: 5s
       retries: 12
       start_period: 90s
+
+  order-service:
+    image: buy01-order-service:${IMAGE_TAG:-latest}
+    build:
+      context: ./backend/orderservice
+      dockerfile: Dockerfile
+    container_name: order-service
+    environment:
+      SPRING_MONGODB_URI: mongodb://order-mongodb:27017/order-service-db
+      JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-key-which-is-long-enough}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-development-internal-service-token}
+      PRODUCT_SERVICE_URL: http://product-service:8082
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka
+    depends_on:
+      order-mongodb:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8084/actuator/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
   media-service:
     image: buy01-media-service:${IMAGE_TAG:-latest}
     build:
@@ -162,6 +202,8 @@ services:
         condition: service_healthy
       user-service:
         condition: service_healthy
+      order-service:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "curl -fsSk https://localhost:8080/actuator/health || exit 1" ]
       interval: 10s
@@ -188,6 +230,7 @@ services:
 volumes:
   user_mongodb_data:
   product_mongodb_data:
+  order_mongodb_data:
   media_mongodb_data:
   media_object_storage_data:
   kafka_data:

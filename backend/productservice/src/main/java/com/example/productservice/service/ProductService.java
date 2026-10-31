@@ -4,6 +4,7 @@ import com.example.productservice.dto.ProductRequest;
 import com.example.productservice.dto.ProductPageResponse;
 import com.example.productservice.dto.ProductResponse;
 import com.example.productservice.exception.ForbiddenException;
+import com.example.productservice.exception.InsufficientStockException;
 import com.example.productservice.exception.InvalidProductSearchException;
 import com.example.productservice.exception.ProductNotFoundException;
 import com.example.productservice.mapper.ProductMapper;
@@ -16,6 +17,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +105,49 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + id));
         return productMapper.toResponse(product);
+    }
+
+    public ProductResponse reserveStock(String productId, int quantity, String reservationId) {
+        String reservationPath = "stockReservations." + reservationId;
+        Query query = Query.query(Criteria.where("_id").is(productId)
+                .and("quantity").gte(quantity)
+                .and(reservationPath).exists(false));
+        Update update = new Update()
+                .inc("quantity", -quantity)
+                .set(reservationPath, quantity);
+        Product reserved = mongoTemplate.findAndModify(
+                query, update, FindAndModifyOptions.options().returnNew(true), Product.class);
+
+        if (reserved == null) {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + productId));
+            Integer existingReservation = product.getStockReservations() == null
+                    ? null
+                    : product.getStockReservations().get(reservationId);
+            if (existingReservation != null && existingReservation == quantity) {
+                return productMapper.toResponse(product);
+            }
+            throw new InsufficientStockException("Insufficient stock or invalid reservation for product " + productId);
+        }
+        return productMapper.toResponse(reserved);
+    }
+
+    public void releaseStock(String productId, String reservationId) {
+        String reservationPath = "stockReservations." + reservationId;
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + productId));
+        Integer quantity = product.getStockReservations() == null
+                ? null
+                : product.getStockReservations().get(reservationId);
+        if (quantity == null) {
+            return;
+        }
+        Query query = Query.query(Criteria.where("_id").is(productId)
+                .and(reservationPath).is(quantity));
+        Update update = new Update()
+                .inc("quantity", quantity)
+                .unset(reservationPath);
+        mongoTemplate.updateFirst(query, update, Product.class);
     }
 
     public ProductResponse createProduct(ProductRequest request, String sellerId) {

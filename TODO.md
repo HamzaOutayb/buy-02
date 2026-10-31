@@ -109,7 +109,6 @@ POST /orders/checkout
 GET  /orders
 GET  /orders/{orderId}
 POST /orders/{orderId}/cancel
-POST /orders/{orderId}/reorder
 GET  /seller/orders
 ```
 
@@ -118,7 +117,6 @@ GET  /seller/orders
 - [ ] Make checkout safe against duplicate submissions. For a minimal solution, accept an idempotency key and persist it uniquely per buyer, or otherwise ensure a retry cannot create duplicate orders.
 - [ ] Clear the cart only after order creation succeeds. Define compensation if inventory was reserved but order persistence failed.
 - [ ] Filter buyer order queries by authenticated buyer ID. Filter seller queries by the seller ID in order items. For `GET /orders/{id}` and cancellation, verify ownership in the service before returning or changing the order.
-- [ ] Implement reorder by copying still-available product IDs/quantities into the cart. Revalidate product availability and price at the next checkout.
 - [ ] Prefer archive/hide over permanently deleting order history. If the evaluator expects “remove,” document exactly which orders are removable and whether this only archives them.
 - [ ] Return appropriate status codes: `201` order created, `400` invalid input, `401` unauthenticated, `403` forbidden, `404` missing, and `409` stock/status/idempotency conflict.
 - [ ] Add tests for price recalculation, stock conflicts, duplicate checkout, cart clearing, buyer/seller access rules, cancellation rules, and failed reservation compensation.
@@ -167,7 +165,7 @@ GET  /seller/orders
 - [ ] Add authenticated routes for `/orders` and `/orders/:id`.
 - [ ] Add a seller orders component/route protected by `sellerGuard`.
 - [ ] Show buyer orders with status/date filters; show order items, snapshot prices, total, delivery details, and a status timeline.
-- [ ] Display cancel/reorder actions only when appropriate, but rely on backend checks as the authority.
+- [ ] Display cancel actions only when appropriate, but rely on backend checks as the authority.
 - [ ] Ensure seller screens do not rely on client-side filtering for privacy; use the seller-scoped backend endpoint.
 
 ### 10. Add search/filter UI to product listing
@@ -197,7 +195,7 @@ GET  /seller/orders
 - [ ] Verify `docker-compose.yml` can build/start the new service and health checks pass.
 - [ ] Run `npm ci`, `npm test`, and `npm run build` in `frontend/`.
 - [ ] Run `./mvnw -B test` in every affected backend service.
-- [ ] Manually test: public search → login → add/update/remove cart item → checkout Pay on Delivery → buyer order list/details → seller's related order list → cancel/reorder where allowed → buyer/seller analytics.
+- [ ] Manually test: public search → login → add/update/remove cart item → checkout Pay on Delivery → buyer order list/details → seller's related order list → cancel where allowed → buyer/seller analytics.
 - [ ] Check 401/403/404/409 and invalid input behavior. Confirm no secrets or password/token data appear in responses/logs.
 - [ ] Update the main `README.md` to reflect features that are actually implemented, list services and API routes, and include local run/test instructions.
 - [ ] Update project branding (`buy-01` vs `buy-02`) only if intended; if renaming, update Compose project/container/image names, Jenkins deployment references, SonarQube project key/name, and documentation together.

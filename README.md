@@ -28,7 +28,8 @@ The backend consists of the following components:
 | API Gateway | Entry point for client requests and routing to backend services |
 | Eureka Server | Service registration and discovery |
 | User Service | Registration, login, user profiles, and roles |
-| Product Service | Product creation, retrieval, updating, and deletion |
+| Product Service | Product management, search, and stock reservation |
+| Orders Service | Buyer carts, checkout, order tracking, and seller order management |
 | Media Service | Image management and Cloudinary integration |
 | MongoDB | Persistence for users, products, and media metadata |
 | Apache Kafka | Asynchronous communication between services |
@@ -38,6 +39,7 @@ The backend consists of the following components:
 
 - The frontend communicates with the backend through the API Gateway.
 - The API Gateway routes requests to registered services.
+- The Orders Service obtains current product details from the Product Service and reserves stock when checkout succeeds.
 - Backend services use Eureka for service discovery.
 - MongoDB stores application data.
 - Kafka transports asynchronous events between the Product Service and Media Service.
@@ -54,13 +56,22 @@ The backend consists of the following components:
 
 ### Product Management
 - Browse available products.
-- Search products by name or description, filter by category and price range, sort results, and navigate paginated results.
+- Search products by name or description, filter by category, and navigate paginated results.
 - Retrieve product details.
 - Create, update, and delete products.
 - Associate products with image URLs.
 - Protect seller operations according to the application's authorization rules.
 
 The public product search endpoint is `GET /products/search`. It accepts `q`, `category`, `page`, and `size` query parameters. Results are returned in a stable newest-first order. The existing `GET /products` endpoint remains available for the seller product view.
+
+### Cart and Orders
+- Add available products to a buyer cart, update quantities, and remove items.
+- Checkout with a delivery address and Pay on Delivery. The Orders Service snapshots product prices and details and splits multi-seller checkouts into seller-scoped orders.
+- Track order status, search/filter order history by text, and cancel placed orders.
+- Sellers can list their related orders and advance them through `PROCESSING`, `SHIPPED`, and `DELIVERED`.
+- Product stock is reserved atomically during checkout and returned when a placed order is cancelled.
+
+The gateway exposes the buyer API under `/cart` and `/orders`, and seller order management under `/seller/orders`. Order-list endpoints accept optional `q`, `status`, `from`, and `to` query parameters; dates use `YYYY-MM-DD`.
 
 ### Media Management
 - Upload product images.
@@ -144,6 +155,7 @@ safezone/
 │   ├── api-gateway/
 │   ├── eureka-server/
 │   ├── mediaservice/
+│   ├── orderservice/
 │   ├── productservice/
 │   └── userservice/
 ├── jenkins/
@@ -155,3 +167,13 @@ safezone/
 ├── backend-architecteur.jpeg
 └── README.md
 ```
+
+### Running the marketplace
+
+Start the application stack from the repository root:
+
+```sh
+docker compose up --build
+```
+
+The Orders Service uses the `order-mongodb` database volume and requires the Product Service and Eureka. Set `JWT_SECRET` and `INTERNAL_SERVICE_TOKEN` in the environment before deploying outside local development; both values must be shared by the services that validate JWTs or perform internal stock operations. The defaults in Compose are development-only.

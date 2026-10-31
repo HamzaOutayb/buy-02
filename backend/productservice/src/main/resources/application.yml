@@ -20,6 +20,7 @@ security:
   jwt:
     secret: ${JWT_SECRET:change-this-development-secret-key-which-is-long-enough}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  internal-service-token: ${INTERNAL_SERVICE_TOKEN:development-internal-service-token}
 
 eureka:
   client:

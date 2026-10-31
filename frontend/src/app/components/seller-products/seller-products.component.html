@@ -83,92 +83,136 @@
         </div>
       </section>
     } @else {
-      <section class="inventory-list" aria-label="Your product listings">
-        <div class="inventory-labels" aria-hidden="true">
-          <span>PRODUCT</span>
-          <span>PRICE</span>
-          <span>INVENTORY</span>
-          <span>MANAGE</span>
+      <div class="inventory-filters" role="search" aria-label="Search and filter your products">
+        <div class="inventory-filter-field">
+          <label for="seller-product-search">Search by name</label>
+          <input
+            id="seller-product-search"
+            name="searchTerm"
+            type="search"
+            [(ngModel)]="searchTerm"
+            maxlength="100"
+            placeholder="Search product names"
+          >
         </div>
+        <div class="inventory-filter-field">
+          <label for="seller-product-category">Filter by category</label>
+          <input
+            id="seller-product-category"
+            name="category"
+            type="search"
+            [(ngModel)]="category"
+            maxlength="50"
+            placeholder="Enter a category"
+          >
+        </div>
+        <button type="button" class="inventory-filter-clear" (click)="clearFilters()">
+          Clear filters
+        </button>
+      </div>
 
-        @for (product of products; track product.id) {
-          <article class="inventory-row">
-            <div class="listing-details">
-              @if (product.imageUrls && product.imageUrls.length > 0) {
-                <div class="listing-images" [attr.aria-label]="product.imageUrls.length + ' product photos'">
-                  @for (imageUrl of product.imageUrls; track imageUrl; let index = $index) {
-                    <img
-                      [src]="imageUrl"
-                      [alt]="product.name + ' photo ' + (index + 1)"
-                    >
+      @if (filteredProducts.length === 0) {
+        <section class="empty-inventory filtered-empty" role="status">
+          <div>
+            <p class="eyebrow">NO MATCHES FOUND</p>
+            <h2>No products match those filters.</h2>
+            <p>Try another name or category, or clear your filters.</p>
+            <button type="button" class="outline-action" (click)="clearFilters()">
+              Clear filters
+            </button>
+          </div>
+        </section>
+      } @else {
+        <section class="inventory-list" aria-label="Your product listings">
+          <div class="inventory-labels" aria-hidden="true">
+            <span>PRODUCT</span>
+            <span>PRICE</span>
+            <span>INVENTORY</span>
+            <span>MANAGE</span>
+          </div>
+
+          @for (product of filteredProducts; track product.id) {
+            <article class="inventory-row">
+              <div class="listing-details">
+                @if (product.imageUrls && product.imageUrls.length > 0) {
+                  <div class="listing-images" [attr.aria-label]="product.imageUrls.length + ' product photos'">
+                    @for (imageUrl of product.imageUrls; track imageUrl; let index = $index) {
+                      <img
+                        [src]="imageUrl"
+                        [alt]="product.name + ' photo ' + (index + 1)"
+                      >
+                    }
+                  </div>
+                } @else {
+                  <div class="listing-placeholder" aria-hidden="true">
+                    <span>{{ product.name.slice(0, 1) }}</span>
+                  </div>
+                }
+                <div class="listing-copy">
+                  <h3>{{ product.name }}</h3>
+                  @if (product.category) {
+                    <span class="listing-category">{{ product.category }}</span>
+                  }
+                  @if (product.description) {
+                    <p>{{ product.description }}</p>
+                  } @else {
+                    <p class="description-empty">No description added.</p>
+                  }
+                  @if (product.imageUrls && product.imageUrls.length > 0) {
+                    <span class="photo-count">{{ product.imageUrls.length }} photos</span>
+                  } @else {
+                    <span class="photo-count">No photos</span>
                   }
                 </div>
-              } @else {
-                <div class="listing-placeholder" aria-hidden="true">
-                  <span>{{ product.name.slice(0, 1) }}</span>
-                </div>
-              }
-              <div class="listing-copy">
-                <h3>{{ product.name }}</h3>
-                @if (product.description) {
-                  <p>{{ product.description }}</p>
-                } @else {
-                  <p class="description-empty">No description added.</p>
-                }
-                @if (product.imageUrls && product.imageUrls.length > 0) {
-                  <span class="photo-count">{{ product.imageUrls.length }} photos</span>
-                } @else {
-                  <span class="photo-count">No photos</span>
-                }
               </div>
-            </div>
 
-            <div class="listing-price">
-              <span class="mobile-label">Price</span>
-              <strong>{{ product.price }}</strong>
-            </div>
+              <div class="listing-price">
+                <span class="mobile-label">Price</span>
+                <strong>{{ product.price }}</strong>
+              </div>
 
-            <div class="listing-stock">
-              @if (product.quantity === 0) {
-                <span class="stock-status stock-empty">Out of stock</span>
-              } @else if (product.quantity <= 3) {
-                <span class="stock-status stock-low">Low stock</span>
-              } @else {
-                <span class="stock-status stock-ready">In stock</span>
-              }
-              <strong>{{ product.quantity }}</strong>
-              <span class="stock-unit">units</span>
-            </div>
-
-            <div class="listing-actions">
-              <a
-                class="action-link preview-link"
-                [routerLink]="['/products', product.id]"
-              >
-                View
-              </a>
-              <a
-                class="action-link edit-link"
-                [routerLink]="['/seller/products', product.id, 'edit']"
-              >
-                Edit
-              </a>
-              <button
-                type="button"
-                class="action-link delete-link"
-                [disabled]="deletingProductId === product.id"
-                (click)="deleteProduct(product)"
-              >
-                @if (deletingProductId === product.id) {
-                  <span>Removing</span>
+              <div class="listing-stock">
+                @if (product.quantity === 0) {
+                  <span class="stock-status stock-empty">Out of stock</span>
+                } @else if (product.quantity <= 3) {
+                  <span class="stock-status stock-low">Low stock</span>
                 } @else {
-                  <span>Delete</span>
+                  <span class="stock-status stock-ready">In stock</span>
                 }
-              </button>
-            </div>
-          </article>
-        }
-      </section>
+                <strong>{{ product.quantity }}</strong>
+                <span class="stock-unit">units</span>
+              </div>
+
+              <div class="listing-actions">
+                <a
+                  class="action-link preview-link"
+                  [routerLink]="['/products', product.id]"
+                >
+                  View
+                </a>
+                <a
+                  class="action-link edit-link"
+                  [routerLink]="['/seller/products', product.id, 'edit']"
+                >
+                  Edit
+                </a>
+                <button
+                  type="button"
+                  class="action-link delete-link"
+                  [disabled]="deletingProductId === product.id"
+                  (click)="deleteProduct(product)"
+                >
+                  @if (deletingProductId === product.id) {
+                    <span>Removing</span>
+                  } @else {
+                    <span>Delete</span>
+                  }
+                </button>
+              </div>
+            </article>
+          }
+        </section>
+      }
     }
   }
 </section>

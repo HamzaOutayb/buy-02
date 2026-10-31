@@ -22,6 +22,10 @@ export class AppComponent {
     return this.authenticated() && this.authService.isSeller();
   }
 
+  get client(): boolean {
+    return this.authenticated() && this.authService.isClient();
+  }
+
   constructor()
   {
     effect((onCleanup) => {

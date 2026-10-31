@@ -1,0 +1,88 @@
+<section class="checkout-page">
+  <a class="checkout-back" routerLink="/cart">← Back to cart</a>
+  <header>
+    <p class="eyebrow">FINAL STEP</p>
+    <h1>Checkout</h1>
+    <p>Delivery address → review → Pay on Delivery</p>
+  </header>
+
+  @if (isLoading) {
+    <p role="status">Loading checkout…</p>
+  } @else if (cartLoadError) {
+    <section class="checkout-state" role="alert">
+      <p>{{ cartLoadError }}</p>
+      <button class="checkout-submit" type="button" (click)="loadCart()">Try again</button>
+    </section>
+  } @else if (cart.items.length === 0) {
+    <section class="checkout-state">
+      <h2>Your cart is empty</h2>
+      <a routerLink="/products">Browse products</a>
+    </section>
+  } @else {
+    @if (errorMessage) {
+      <p class="checkout-error" role="alert">{{ errorMessage }}</p>
+    }
+    <div class="checkout-layout">
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <section class="checkout-card">
+          <h2>1. Delivery address</h2>
+          <label for="recipientName">Recipient name</label>
+          <input id="recipientName" formControlName="recipientName" autocomplete="name"
+            [attr.aria-invalid]="form.controls.recipientName.touched && form.controls.recipientName.invalid">
+          @if (form.controls.recipientName.touched && form.controls.recipientName.invalid) {
+            <small class="field-error" role="alert">Enter a recipient name (up to 100 characters).</small>
+          }
+          <label for="phone">Phone</label>
+          <input id="phone" formControlName="phone" type="tel" autocomplete="tel"
+            [attr.aria-invalid]="form.controls.phone.touched && form.controls.phone.invalid">
+          @if (form.controls.phone.touched && form.controls.phone.invalid) {
+            <small class="field-error" role="alert">Enter a phone number (up to 30 characters).</small>
+          }
+          <label for="street">Street address</label>
+          <input id="street" formControlName="street" autocomplete="street-address"
+            [attr.aria-invalid]="form.controls.street.touched && form.controls.street.invalid">
+          @if (form.controls.street.touched && form.controls.street.invalid) {
+            <small class="field-error" role="alert">Enter a street address (up to 200 characters).</small>
+          }
+          <div class="address-row">
+            <div>
+              <label for="city">City</label>
+              <input id="city" formControlName="city" autocomplete="address-level2"
+                [attr.aria-invalid]="form.controls.city.touched && form.controls.city.invalid">
+              @if (form.controls.city.touched && form.controls.city.invalid) {
+                <small class="field-error" role="alert">Enter a city (up to 100 characters).</small>
+              }
+            </div>
+            <div>
+              <label for="postalCode">Postal code</label>
+              <input id="postalCode" formControlName="postalCode" autocomplete="postal-code"
+                [attr.aria-invalid]="form.controls.postalCode.touched && form.controls.postalCode.invalid">
+              @if (form.controls.postalCode.touched && form.controls.postalCode.invalid) {
+                <small class="field-error" role="alert">Enter a postal code (up to 20 characters).</small>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="checkout-card">
+          <h2>2. Review items</h2>
+          @for (item of cart.items; track item.productId) {
+            <p class="review-item">
+              <span>{{ item.name }} × {{ item.quantity }}</span>
+              <strong>{{ item.lineTotal | number:'1.2-2' }}</strong>
+            </p>
+          }
+          <p class="review-total"><span>Total</span><strong>{{ cart.subtotal | number:'1.2-2' }}</strong></p>
+        </section>
+
+        <section class="checkout-card payment-card">
+          <h2>3. Payment</h2>
+          <p>Pay on Delivery — payment will be collected when your order arrives.</p>
+        </section>
+        <button class="checkout-submit" type="submit" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Placing order…' : 'Confirm order — Pay on Delivery' }}
+        </button>
+      </form>
+    </div>
+  }
+</section>

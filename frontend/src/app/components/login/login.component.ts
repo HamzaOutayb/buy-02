@@ -5,7 +5,7 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { getApiErrorMessage } from '../../helpers/api-error-message';
 import { LoginRequest } from '../../models/auth.model';
 import { AuthService } from '../../services/auth.service';
@@ -19,6 +19,7 @@ import { AuthService } from '../../services/auth.service';
 })
 export class LoginComponent {
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly formBuilder = inject(NonNullableFormBuilder);
 
@@ -48,7 +49,11 @@ export class LoginComponent {
       next: (response) => {
         this.authService.saveToken(response.token);
         this.isSubmitting = false;
-        void this.router.navigateByUrl('/products');
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        const destination = returnUrl?.startsWith('/') && !returnUrl.startsWith('//')
+          ? returnUrl
+          : '/products';
+        void this.router.navigateByUrl(destination);
       },
       error: (error: HttpErrorResponse) => {
         this.errorMessage = getApiErrorMessage(
