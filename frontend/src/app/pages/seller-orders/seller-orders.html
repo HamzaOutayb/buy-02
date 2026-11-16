@@ -1,0 +1,322 @@
+<main class="min-h-screen bg-[#f4f1eb] text-slate-900">
+  <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 sm:px-8" aria-label="Seller orders navigation">
+    <a routerLink="/" class="text-xl font-black tracking-tight">buy<span class="text-teal-700">/01</span></a>
+    <div class="flex items-center gap-3 text-sm font-bold">
+      <a routerLink="/dashboard" class="text-slate-600 transition hover:text-teal-700">Products</a>
+      <a routerLink="/dashboard/orders" class="text-teal-700">Orders</a>
+      <a routerLink="/" class="text-slate-600 transition hover:text-teal-700">Browse</a>
+      @if (user(); as currentUser) {
+        <a routerLink="/profile" class="hidden text-slate-500 transition hover:text-teal-700 sm:inline">Hi, {{ currentUser.name }}</a>
+        <button type="button" (click)="logout()"
+          class="rounded-full border border-slate-300 px-4 py-2 text-slate-700 transition hover:border-teal-700 hover:text-teal-700">
+          Sign out
+        </button>
+      }
+    </div>
+  </nav>
+
+  <section class="mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8">
+    <div class="mb-8 border-b border-slate-300 pb-6">
+      <p class="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-teal-700">Seller Studio</p>
+      <h1 class="text-4xl font-semibold tracking-tight text-slate-950">Customer Orders</h1>
+      <p class="mt-2 text-sm text-slate-600">Manage order fulfillment for products sold in your shop.</p>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="mb-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="seller-search-ref">Order Reference</label>
+          <input
+            id="seller-search-ref"
+            type="text"
+            [(ngModel)]="searchReference"
+            (keyup.enter)="applyFilters()"
+            placeholder="e.g. ORD-1234"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none focus:border-teal-700" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="seller-search-cust">Customer ID</label>
+          <input
+            id="seller-search-cust"
+            type="text"
+            [(ngModel)]="searchCustomer"
+            (keyup.enter)="applyFilters()"
+            placeholder="Customer identifier"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none focus:border-teal-700" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="seller-filter-status">Status</label>
+          <select
+            id="seller-filter-status"
+            [(ngModel)]="selectedStatus"
+            (change)="applyFilters()"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700">
+            <option value="">All Statuses</option>
+            @for (st of statusOptions; track st) {
+              @if (st !== '') {
+                <option [value]="st">{{ st }}</option>
+              }
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="seller-date-from">From Date</label>
+          <input
+            id="seller-date-from"
+            type="date"
+            [(ngModel)]="dateFrom"
+            (change)="applyFilters()"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="seller-date-to">To Date</label>
+          <input
+            id="seller-date-to"
+            type="date"
+            [(ngModel)]="dateTo"
+            (change)="applyFilters()"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700" />
+        </div>
+      </div>
+
+      <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+        <span class="text-xs font-bold text-slate-500">
+          Orders matching: {{ totalElements() }}
+        </span>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="resetFilters()"
+            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-slate-400">
+            Reset
+          </button>
+          <button
+            type="button"
+            (click)="applyFilters()"
+            class="rounded-lg bg-teal-800 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-teal-900">
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content: Orders List + Optional Detail Panel -->
+    <div class="grid gap-8" [ngClass]="selectedOrderDetail() ? 'lg:grid-cols-[1fr_400px]' : ''">
+      <!-- Orders List Column -->
+      <div>
+        @if (isLoading()) {
+          <div class="space-y-4">
+            @for (item of [1, 2, 3]; track item) {
+              <div class="h-28 animate-pulse rounded-2xl bg-slate-200"></div>
+            }
+          </div>
+        } @else if (hasError()) {
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center" role="alert">
+            <p class="font-bold text-red-700">Failed to load seller orders</p>
+            <button
+              type="button"
+              (click)="loadOrders()"
+              class="mt-4 rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50">
+              Try again
+            </button>
+          </div>
+        } @else if (orders().length === 0) {
+          <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+            <p class="text-4xl mb-3">📋</p>
+            <h2 class="text-lg font-bold text-slate-950">No orders found</h2>
+            <p class="mt-1 text-sm text-slate-500">Orders for your products will appear here once customers place them.</p>
+          </div>
+        } @else {
+          <div class="space-y-4">
+            @for (order of orders(); track order.id) {
+              <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="space-y-1.5">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                      <span class="font-mono text-base font-black text-slate-950">#{{ order.orderReference }}</span>
+                      <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold"
+                        [ngClass]="getStatusBadgeClass(order.status)">
+                        {{ order.status }}
+                      </span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <span>{{ order.createdAt | date:'mediumDate' }}</span>
+                      <span>•</span>
+                      <span>Customer: {{ order.customerId | slice:0:10 }}...</span>
+                      <span>•</span>
+                      <span>{{ order.itemCount }} of your {{ order.itemCount === 1 ? 'product' : 'products' }}</span>
+                    </div>
+
+                    <p class="text-base font-bold text-teal-900">
+                      Your Subtotal: ${{ order.total | number:'1.2-2' }}
+                    </p>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      (click)="viewDetails(order.id)"
+                      class="rounded-xl border border-slate-300 px-3.5 py-1.5 text-xs font-bold text-slate-700 transition hover:border-teal-700 hover:text-teal-700">
+                      View items
+                    </button>
+
+                    @if (order.status === 'PENDING') {
+                      <button
+                        type="button"
+                        [disabled]="updatingId() === order.id"
+                        (click)="confirmOrder(order)"
+                        class="rounded-xl bg-teal-800 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-teal-900 disabled:opacity-50">
+                        Confirm
+                      </button>
+                    }
+
+                    @if (order.status === 'CONFIRMED') {
+                      <button
+                        type="button"
+                        [disabled]="updatingId() === order.id"
+                        (click)="updateStatus(order, 'PROCESSING')"
+                        class="rounded-xl bg-purple-700 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-purple-800 disabled:opacity-50">
+                        Mark Processing
+                      </button>
+                    }
+
+                    @if (order.status === 'PROCESSING') {
+                      <button
+                        type="button"
+                        [disabled]="updatingId() === order.id"
+                        (click)="updateStatus(order, 'SHIPPED')"
+                        class="rounded-xl bg-indigo-700 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-800 disabled:opacity-50">
+                        Mark Shipped
+                      </button>
+                    }
+
+                    @if (order.status === 'SHIPPED') {
+                      <button
+                        type="button"
+                        [disabled]="updatingId() === order.id"
+                        (click)="updateStatus(order, 'DELIVERED')"
+                        class="rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-emerald-800 disabled:opacity-50">
+                        Mark Delivered
+                      </button>
+                    }
+
+                    @if (order.status === 'PENDING' || order.status === 'CONFIRMED') {
+                      <button
+                        type="button"
+                        [disabled]="updatingId() === order.id"
+                        (click)="cancelOrder(order)"
+                        class="rounded-xl border border-red-200 px-3.5 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-50">
+                        Cancel
+                      </button>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <div class="mt-8 flex items-center justify-between border-t border-slate-300 pt-6">
+              <p class="text-xs font-bold text-slate-500">
+                Page {{ currentPage() + 1 }} of {{ totalPages() }}
+              </p>
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  [disabled]="currentPage() === 0"
+                  (click)="goToPage(currentPage() - 1)"
+                  class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-teal-700 hover:text-teal-700 disabled:opacity-40">
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  [disabled]="currentPage() >= totalPages() - 1"
+                  (click)="goToPage(currentPage() + 1)"
+                  class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-teal-700 hover:text-teal-700 disabled:opacity-40">
+                  Next
+                </button>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Detail Side Panel (When an order is inspected) -->
+      @if (selectedOrderDetail(); as detail) {
+        <aside class="rounded-2xl border border-slate-200 bg-white p-6 shadow-md lg:sticky lg:top-6">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-teal-700">Order Details</p>
+              <h2 class="font-mono text-lg font-black text-slate-950">#{{ detail.orderReference }}</h2>
+            </div>
+            <button
+              type="button"
+              (click)="closeDetails()"
+              class="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Close details">
+              ✕
+            </button>
+          </div>
+
+          <div class="mt-4 space-y-4">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Status</span>
+              <p class="mt-1">
+                <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold"
+                  [ngClass]="getStatusBadgeClass(detail.status)">
+                  {{ detail.status }}
+                </span>
+              </p>
+            </div>
+
+            <!-- Customer & Delivery -->
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs">
+              <p class="font-bold uppercase tracking-wider text-slate-500 mb-1">Deliver To</p>
+              <p class="font-bold text-slate-900">{{ detail.deliveryAddress.recipientName }}</p>
+              <p class="text-slate-600">{{ detail.deliveryAddress.phone }}</p>
+              <p class="text-slate-600">{{ detail.deliveryAddress.city }}</p>
+              <p class="text-slate-600">{{ detail.deliveryAddress.fullAddress }}</p>
+            </div>
+
+            <!-- Products belonging to this seller only -->
+            <div>
+              <p class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                Your Products in this Order ({{ detail.items.length }})
+              </p>
+              <div class="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                @for (item of detail.items; track item.productId) {
+                  <div class="flex items-center gap-3 py-2.5">
+                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-[#e3e7df]">
+                      @if (item.imageUrl) {
+                        <img [src]="item.imageUrl" [alt]="item.productName" class="h-full w-full object-cover" />
+                      }
+                    </div>
+                    <div class="min-w-0 flex-1 text-xs">
+                      <p class="truncate font-bold text-slate-950">{{ item.productName }}</p>
+                      <p class="text-slate-500">Qty: {{ item.quantity }} × ${{ item.unitPrice | number:'1.2-2' }}</p>
+                    </div>
+                    <p class="font-bold text-xs text-slate-950">${{ item.subtotal | number:'1.2-2' }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Total -->
+            <div class="border-t border-slate-200 pt-3 flex justify-between items-center text-sm font-bold">
+              <span>Your Portion Total</span>
+              <span class="text-base text-teal-900">${{ detail.total | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </aside>
+      }
+    </div>
+  </section>
+</main>
