@@ -55,7 +55,7 @@ pipeline {
         stage('Backend SonarQube analysis 1') {
             steps {
                 script {
-                    for (service in ['gateway', 'userService', 'productService', 'mediaService', 'server']) {
+                    for (service in ['gateway', 'userService', 'productService', 'mediaService', 'server', 'orderService']) {
                         echo "Analyzing backend/${service}"
                         sh 'find backend -type f -path "*/target/sonar/report-task.txt" -delete'
                         withSonarQubeEnv('SonarQube') {
