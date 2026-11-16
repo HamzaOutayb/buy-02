@@ -1,5 +1,6 @@
 package com.product.productService.service;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import com.product.productService.dto.ProductEvent;
 import com.product.productService.dto.ProductReq;
 import com.product.productService.dto.ProductRes;
 import com.product.productService.model.Product;
+import com.product.productService.model.Categories;
 import com.product.productService.reposiroty.ProductRepository;
 
 import lombok.AllArgsConstructor;
@@ -26,6 +28,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final KafkaTemplate<String, ProductEvent> kafkaTemplate;
     private final MediaClient mediaClient;
+
+    public List<ProductRes> search(String keyword, List<String> categories) {
+        String normalizedKeyword = keyword == null ? ".*" : keyword.trim();
+        List<String> normalizedCategories = categories == null ? List.of() : categories;
+        return productRepository.search(normalizedKeyword, normalizedCategories).stream()
+                .map(product -> toResponse(product, mediaClient.getImageUrls(product.getId())))
+                .toList();
+    }
 
     public List<ProductRes> getAll() {
         return productRepository.findAll().stream().map(product -> toResponse(product, mediaClient.getImageUrls(product.getId())))
@@ -47,9 +57,10 @@ public class ProductService {
     @PreAuthorize("hasRole('SELLER')")
     public ProductRes create(ProductReq req, Authentication authentication) {
         validateImageUrls(req.imageUrls());
+        String[] categories = validateCategories(req.categories());
 
         Product product = new Product(null, req.name(), req.description(), req.price(), req.quantity(),
-                authentication.getName());
+            authentication.getName(), categories);
         Product savedProduct = productRepository.save(product);
         ProductRes response = toResponse(savedProduct, req.imageUrls());
         sendProduct(new ProductEvent("CREATE", savedProduct.getId(), req.imageUrls()));
@@ -64,11 +75,13 @@ public class ProductService {
     public ProductRes update(String productId, ProductReq req, Authentication authentication) {
         Product product = findOwnedProduct(productId, authentication);
         validateImageUrls(req.imageUrls());
+        String[] categories = validateCategories(req.categories());
 
         product.setName(req.name());
         product.setDescription(req.description());
         product.setPrice(req.price());
         product.setQuantity(req.quantity());
+        product.setCategories(categories);
         Product savedProduct = productRepository.save(product);
         sendProduct(new ProductEvent("UPDATE", savedProduct.getId(), req.imageUrls()));
         return toResponse(savedProduct, req.imageUrls());
@@ -102,8 +115,20 @@ public class ProductService {
         }
     }
 
+    private String[] validateCategories(String[] categories) {
+        String[] requestedCategories = categories == null ? new String[0] : categories;
+        if (Arrays.stream(requestedCategories).anyMatch(category -> !Categories.isValid(category))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Each category must be one of the supported product categories");
+        }
+        return Arrays.stream(requestedCategories)
+                .map(Categories::normalize)
+                .distinct()
+                .toArray(String[]::new);
+    }
+
     private ProductRes toResponse(Product product, String[] imageUrls) {
         return new ProductRes(product.getId(), product.getName(), product.getDescription(), product.getPrice(),
-                product.getQuantity(), product.getUserId(), imageUrls);
+            product.getQuantity(), product.getUserId(), imageUrls, product.getCategories());
     }
 }
