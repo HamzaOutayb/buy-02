@@ -1,10 +1,15 @@
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Component, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, RouterLink } from '@angular/router';
 import { MediaService } from '../../services/media-service';
-import { Product, ProductRequest, ProductService } from '../../services/product-service';
+import {
+  PRODUCT_CATEGORIES,
+  Product,
+  ProductRequest,
+  ProductService,
+} from '../../services/product-service';
 import { UserContextService } from '../../services/user-context-service';
 
 interface ImagePreview {
@@ -18,7 +23,7 @@ const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
 
 @Component({
   selector: 'app-dashboard',
-  imports: [DecimalPipe, ReactiveFormsModule, RouterLink],
+  imports: [DecimalPipe, ReactiveFormsModule, RouterLink, TitleCasePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -42,12 +47,14 @@ export class Dashboard implements OnDestroy, OnInit {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
+  readonly productCategories = PRODUCT_CATEGORIES;
 
   readonly productForm = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(500)]],
     description: ['', [Validators.required, Validators.maxLength(500)]],
     price: [0, [Validators.required, Validators.min(0.1)]],
     quantity: [0, [Validators.required, Validators.min(0)]],
+    categories: [[] as string[]],
   });
 
   ngOnInit(): void {
@@ -115,6 +122,18 @@ export class Dashboard implements OnDestroy, OnInit {
     );
   }
 
+  isCategorySelected(category: string): boolean {
+    return this.productForm.controls.categories.value.includes(category);
+  }
+
+  toggleCategory(category: string): void {
+    const selectedCategories = this.productForm.controls.categories.value;
+    const categories = selectedCategories.includes(category)
+      ? selectedCategories.filter((selectedCategory) => selectedCategory !== category)
+      : [...selectedCategories, category];
+    this.productForm.controls.categories.setValue(categories);
+  }
+
   editProduct(product: Product): void {
     this.editingProduct.set(product);
     this.productForm.setValue({
@@ -122,6 +141,7 @@ export class Dashboard implements OnDestroy, OnInit {
       description: product.description,
       price: product.price,
       quantity: product.quantity,
+      categories: product.categories,
     });
     this.clearSelectedFiles();
     this.existingImageUrls.set([...product.imageUrls]);
@@ -132,7 +152,7 @@ export class Dashboard implements OnDestroy, OnInit {
 
   cancelEdit(): void {
     this.editingProduct.set(null);
-    this.productForm.reset({ name: '', description: '', price: 0, quantity: 0 });
+    this.productForm.reset({ name: '', description: '', price: 0, quantity: 0, categories: [] });
     this.clearSelectedFiles();
     this.existingImageUrls.set([]);
     this.errorMessage.set('');

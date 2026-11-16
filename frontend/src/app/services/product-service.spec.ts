@@ -19,6 +19,7 @@ describe('ProductService', () => {
     quantity: 3,
     userId: 'seller-1',
     imageUrls: ['https://cdn.example/chair.png'],
+    categories: ['furniture'],
   };
   const request: ProductRequest = {
     name: product.name,
@@ -26,6 +27,7 @@ describe('ProductService', () => {
     price: product.price,
     quantity: product.quantity,
     imageUrls: product.imageUrls,
+    categories: product.categories,
   };
 
   beforeEach(() => {
