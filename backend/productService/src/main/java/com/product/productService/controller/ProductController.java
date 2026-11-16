@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.product.productService.dto.ProductReq;
@@ -26,6 +27,13 @@ import lombok.AllArgsConstructor;
 @Validated
 public class ProductController {
     private final ProductService productService;
+    
+    @GetMapping("/search")
+    public List<ProductRes> searchProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) List<String> categories) {
+        return productService.search(keyword, categories);
+    }
 
     @GetMapping
     public List<ProductRes> getProducts() {
