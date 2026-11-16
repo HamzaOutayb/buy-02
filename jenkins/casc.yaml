@@ -71,7 +71,7 @@ jobs:
                 credentialsId('github-api')
                 repoOwner('HamzaOutayb')
                 repository('buy-02')
-                repositoryUrl('https://github.com/HamzaOutayb/buy-02.git')
+                repositoryUrl('https://github.com/HamzaOutayb/buy-02')
                 configuredByUrl(false)
 
                 traits {

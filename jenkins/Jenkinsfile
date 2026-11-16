@@ -60,7 +60,7 @@ pipeline {
                         sh 'find backend -type f -path "*/target/sonar/report-task.txt" -delete'
                         withSonarQubeEnv('SonarQube') {
                             dir("backend/${service}") {
-                                sh "./mvnw -B -ntp org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=buy-01-${service} -Dsonar.projectName=buy-01-${service} -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml"
+                                sh "./mvnw -B -ntp org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=buy-02-${service} -Dsonar.projectName=buy-02-${service} -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml"
                             }
                         }
 

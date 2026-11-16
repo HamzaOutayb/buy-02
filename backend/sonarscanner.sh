@@ -22,8 +22,8 @@ for service in gateway userService productService mediaService server; do
   (
     cd "$backend_dir/$service"
     ./mvnw -B -ntp org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-      -Dsonar.projectKey="buy-01-$service" \
-      -Dsonar.projectName="buy-01-$service" \
+      -Dsonar.projectKey="buy-02-$service" \
+      -Dsonar.projectName="buy-02-$service" \
       -Dsonar.host.url="$sonar_host_url" \
       -Dsonar.token="$SONAR_TOKEN"
   )

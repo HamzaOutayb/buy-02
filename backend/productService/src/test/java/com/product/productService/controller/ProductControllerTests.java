@@ -38,6 +38,16 @@ class ProductControllerTests {
     }
 
     @Test
+    void searchProductsDelegatesKeywordAndCategories() {
+        List<String> categories = List.of("furniture", "home");
+        List<ProductRes> products = List.of(response("product-1"));
+        when(productService.search("chair", categories)).thenReturn(products);
+
+        assertEquals(products, productController.searchProducts("chair", categories));
+        verify(productService).search("chair", categories);
+    }
+
+    @Test
     void getMyProductsDelegatesAuthentication() {
         List<ProductRes> products = List.of(response("product-1"));
         when(productService.getMine(authentication)).thenReturn(products);

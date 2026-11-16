@@ -60,6 +60,29 @@ public class ProductServiceTests {
     }
 
     @Test
+    void searchFiltersByKeywordAndCategoriesAndAddsMediaUrls() {
+        Product product = product("product-1", "seller-1");
+        List<String> categories = List.of("furniture", "home");
+        when(productRepository.search("chair", categories)).thenReturn(List.of(product));
+        when(mediaClient.getImageUrls("product-1")).thenReturn(new String[] { "image-1" });
+
+        List<ProductRes> result = productService.search(" chair ", categories);
+
+        verify(productRepository).search("chair", categories);
+        assertProductResponse(result.get(0), product, "image-1");
+    }
+
+    @Test
+    void searchUsesMatchAllRegexWhenKeywordIsMissing() {
+        when(productRepository.search(".*", List.of())).thenReturn(List.of());
+
+        List<ProductRes> result = productService.search(null, null);
+
+        assertEquals(List.of(), result);
+        verify(productRepository).search(".*", List.of());
+    }
+
+    @Test
     void getMineUsesAuthenticatedUserId() {
         Product product = product("product-1", "seller-1");
         when(authentication.getName()).thenReturn("seller-1");
@@ -98,6 +121,53 @@ public class ProductServiceTests {
         assertEquals("product-1", event.productId());
         assertArrayEquals(request.imageUrls(), event.imageUrls());
         assertProductResponse(result, savedProduct, "image-1");
+    }
+
+    @Test
+    void createNormalizesAndDeduplicatesCategoriesBeforeSaving() {
+        ProductReq request = new ProductReq("chair", "Wood chair", 25.0, 4,
+                new String[] { "image-1" }, new String[] { "Furniture", "home", "furniture" });
+        Product savedProduct = new Product("product-1", "chair", "Wood chair", 25.0, 4, "seller-1",
+                new String[] { "furniture", "home" });
+        when(authentication.getName()).thenReturn("seller-1");
+        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
+
+        productService.create(request, authentication);
+
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptor.capture());
+        assertArrayEquals(new String[] { "furniture", "home" }, productCaptor.getValue().getCategories());
+    }
+
+    @Test
+    void createSuccessfullySavesProductWithCategories() {
+        ProductReq request = new ProductReq("chair", "Wood chair", 25.0, 4,
+                new String[] { "image-1" }, new String[] { "furniture", "home" });
+        Product savedProduct = new Product("product-1", "chair", "Wood chair", 25.0, 4, "seller-1",
+                new String[] { "furniture", "home" });
+        when(authentication.getName()).thenReturn("seller-1");
+        when(productRepository.save(any(Product.class))).thenReturn(savedProduct);
+
+        ProductRes result = productService.create(request, authentication);
+
+        assertEquals("product-1", result.id());
+        assertArrayEquals(request.categories(), result.categories());
+        verify(productRepository).save(any(Product.class));
+        ProductEvent event = publishedEvent();
+        assertEquals("CREATE", event.operation());
+        assertEquals("product-1", event.productId());
+    }
+
+    @Test
+    void createRejectsUnsupportedCategoryBeforeSaving() {
+        ProductReq request = new ProductReq("chair", "Wood chair", 25.0, 4,
+                new String[] { "image-1" }, new String[] { "furniture", "not-a-category" });
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> productService.create(request, authentication));
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        verify(productRepository, never()).save(any(Product.class));
     }
 
     @Test
