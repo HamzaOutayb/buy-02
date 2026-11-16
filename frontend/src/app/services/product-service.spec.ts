@@ -49,6 +49,15 @@ describe('ProductService', () => {
     expect(actual).toEqual([product]);
   });
 
+  it('searches products by keyword and category', () => {
+    service.searchProducts('chair', ['furniture']).subscribe((actual) => expect(actual).toEqual([product]));
+    const req = httpTesting.expectOne((request) => request.url === `${apiUrl}/search`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('keyword')).toBe('chair');
+    expect(req.request.params.getAll('categories')).toEqual(['furniture']);
+    req.flush([product]);
+  });
+
   it('gets the current seller products', () => {
     service.getMyProducts().subscribe();
     const req = httpTesting.expectOne(`${apiUrl}/mine`);

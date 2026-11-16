@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -37,6 +37,17 @@ export class ProductService {
 
   getProducts(): Observable<Product[]> {
     return this.http.get<Product[]>(this.apiUrl);
+  }
+
+  searchProducts(keyword: string, categories: string[] = []): Observable<Product[]> {
+    let params = new HttpParams();
+    if (keyword.trim()) {
+      params = params.set('keyword', keyword.trim());
+    }
+    categories.forEach((category) => {
+      params = params.append('categories', category);
+    });
+    return this.http.get<Product[]>(`${this.apiUrl}/search`, { params });
   }
 
   getMyProducts(): Observable<Product[]> {
