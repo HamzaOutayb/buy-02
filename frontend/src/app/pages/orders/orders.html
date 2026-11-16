@@ -1,0 +1,219 @@
+<main class="min-h-screen bg-[#f4f1eb] text-slate-900">
+  <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 sm:px-8" aria-label="Orders navigation">
+    <a routerLink="/" class="text-xl font-black tracking-tight">buy<span class="text-teal-700">/01</span></a>
+    <div class="flex items-center gap-3 text-sm font-bold">
+      <a routerLink="/" class="text-slate-600 transition hover:text-teal-700">Browse</a>
+      <a routerLink="/cart" class="text-slate-600 transition hover:text-teal-700">Cart</a>
+      @if (user(); as currentUser) {
+        @if (currentUser.role === 'SELLER') {
+          <a routerLink="/dashboard" class="text-slate-600 transition hover:text-teal-700">Dashboard</a>
+        }
+        <a routerLink="/profile" class="hidden text-slate-500 transition hover:text-teal-700 sm:inline">Hi, {{ currentUser.name }}</a>
+        <button type="button" (click)="logout()"
+          class="rounded-full border border-slate-300 px-4 py-2 text-slate-700 transition hover:border-teal-700 hover:text-teal-700">
+          Sign out
+        </button>
+      }
+    </div>
+  </nav>
+
+  <section class="mx-auto max-w-6xl px-5 pb-24 pt-8 sm:px-8">
+    <div class="mb-8 border-b border-slate-300 pb-6">
+      <p class="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-teal-700">Purchases</p>
+      <h1 class="text-4xl font-semibold tracking-tight text-slate-950">My Orders</h1>
+      <p class="mt-2 text-sm text-slate-600">Track and manage your order history.</p>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="mb-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="search-ref">Search Reference</label>
+          <input
+            id="search-ref"
+            type="text"
+            [(ngModel)]="searchReference"
+            (keyup.enter)="applyFilters()"
+            placeholder="e.g. ORD-A1B2C3"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 px-3 text-sm outline-none focus:border-teal-700" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="filter-status">Status</label>
+          <select
+            id="filter-status"
+            [(ngModel)]="selectedStatus"
+            (change)="applyFilters()"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700">
+            <option value="">All Statuses</option>
+            @for (st of statusOptions; track st) {
+              @if (st !== '') {
+                <option [value]="st">{{ st }}</option>
+              }
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="date-from">From Date</label>
+          <input
+            id="date-from"
+            type="date"
+            [(ngModel)]="dateFrom"
+            (change)="applyFilters()"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500" for="date-to">To Date</label>
+          <input
+            id="date-to"
+            type="date"
+            [(ngModel)]="dateTo"
+            (change)="applyFilters()"
+            class="mt-1.5 block h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-700" />
+        </div>
+      </div>
+
+      <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+        <span class="text-xs font-bold text-slate-500">
+          Total orders: {{ totalElements() }}
+        </span>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="resetFilters()"
+            class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-slate-400">
+            Reset
+          </button>
+          <button
+            type="button"
+            (click)="applyFilters()"
+            class="rounded-lg bg-teal-800 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-teal-900">
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="space-y-4">
+        @for (item of [1, 2, 3]; track item) {
+          <div class="h-32 animate-pulse rounded-2xl bg-slate-200"></div>
+        }
+      </div>
+    } @else if (hasError()) {
+      <!-- Error State -->
+      <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-center" role="alert">
+        <p class="font-bold text-red-700">Unable to load orders</p>
+        <p class="mt-1 text-sm text-red-600">Please verify your connection and try again.</p>
+        <button
+          type="button"
+          (click)="loadOrders()"
+          class="mt-4 rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50">
+          Try again
+        </button>
+      </div>
+    } @else if (orders().length === 0) {
+      <!-- Empty State -->
+      <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
+        <p class="text-4xl mb-3">📦</p>
+        <h2 class="text-lg font-bold text-slate-950">No orders found</h2>
+        <p class="mt-1 text-sm text-slate-500">
+          @if (searchReference || selectedStatus || dateFrom || dateTo) {
+            No orders match your filter criteria. Try resetting filters.
+          } @else {
+            You haven't placed any orders yet.
+          }
+        </p>
+        <a
+          routerLink="/"
+          class="mt-6 inline-flex items-center rounded-full bg-[#172a2b] px-6 py-2.5 text-sm font-bold text-white transition hover:bg-teal-900">
+          Explore products
+        </a>
+      </div>
+    } @else {
+      <!-- Order List -->
+      <div class="space-y-4">
+        @for (order of orders(); track order.id) {
+          <article class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm transition hover:border-slate-300 sm:flex-row sm:items-center sm:justify-between">
+            <div class="space-y-2">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="font-mono text-base font-black text-slate-950">#{{ order.orderReference }}</span>
+                <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold"
+                  [ngClass]="getStatusBadgeClass(order.status)">
+                  {{ order.status }}
+                </span>
+              </div>
+
+              <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                <span>Placed on {{ order.createdAt | date:'mediumDate' }}</span>
+                <span>•</span>
+                <span>{{ order.itemCount }} {{ order.itemCount === 1 ? 'item' : 'items' }}</span>
+                <span>•</span>
+                <span>Cash on Delivery</span>
+              </div>
+
+              <p class="text-lg font-bold text-teal-900">
+                ${{ order.total | number:'1.2-2' }}
+              </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 sm:border-0 sm:pt-0">
+              <a
+                [routerLink]="['/orders', order.id]"
+                class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-teal-700 hover:text-teal-700">
+                View details
+              </a>
+
+              @if (order.status === 'PENDING') {
+                <button
+                  type="button"
+                  [disabled]="cancellingId() === order.id"
+                  (click)="cancelOrder(order)"
+                  class="rounded-xl border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50 disabled:opacity-50">
+                  {{ cancellingId() === order.id ? 'Cancelling...' : 'Cancel' }}
+                </button>
+              }
+
+              <button
+                type="button"
+                [disabled]="reorderingId() === order.id"
+                (click)="reorder(order)"
+                class="rounded-xl bg-[#172a2b] px-4 py-2 text-xs font-bold text-white transition hover:bg-teal-900 disabled:opacity-50">
+                {{ reorderingId() === order.id ? 'Reordering...' : 'Reorder' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="mt-8 flex items-center justify-between border-t border-slate-300 pt-6">
+          <p class="text-xs font-bold text-slate-500">
+            Page {{ currentPage() + 1 }} of {{ totalPages() }}
+          </p>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              [disabled]="currentPage() === 0"
+              (click)="goToPage(currentPage() - 1)"
+              class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-teal-700 hover:text-teal-700 disabled:opacity-40">
+              Previous
+            </button>
+            <button
+              type="button"
+              [disabled]="currentPage() >= totalPages() - 1"
+              (click)="goToPage(currentPage() + 1)"
+              class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 transition hover:border-teal-700 hover:text-teal-700 disabled:opacity-40">
+              Next
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </section>
+</main>

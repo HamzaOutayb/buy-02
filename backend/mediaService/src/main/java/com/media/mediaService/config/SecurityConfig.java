@@ -14,7 +14,6 @@ import com.media.mediaService.securityFilters.GatewayIdentityFilter;;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
-
         @Bean
         public SecurityFilterChain enableSpringSecurity(
                         HttpSecurity http,

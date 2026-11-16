@@ -31,7 +31,7 @@ public class MediaController {
 
     private final MediaService mediaService;
     private final MediaRepository mediaRepository;
-
+    // media controller handles media-related endpoints, including fetching product media, retrieving images, and uploading images. It uses MediaService for business logic and MediaRepository for database interactions.
     public MediaController(MediaService mediaService, MediaRepository mediaRepository) {
         this.mediaService = mediaService;
         this.mediaRepository = mediaRepository;

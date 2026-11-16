@@ -48,6 +48,20 @@ services:
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-test}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-test}
 
+  order:
+    hostname: order
+    image: ${IMAGE_NAMESPACE:-mr-jenk}/order:${IMAGE_TAG:-latest}
+    build: ./orderService
+    ports:
+      - "8084"
+    depends_on:
+      - server
+      - broker
+      - product
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-test}
+      - MONGODB_URI=${MONGODB_URI:-test}
+
   gateway:
     hostname: gatewat
     image: ${IMAGE_NAMESPACE:-mr-jenk}/gateway:${IMAGE_TAG:-latest}
@@ -59,6 +73,7 @@ services:
       - user
       - product
       - media
+      - order
     environment:
       - JWT_SECRET=${JWT_SECRET:-test}
       - SERVER_SSL_KEY_STORE_PASSWORD=${SERVER_SSL_KEY_STORE_PASSWORD:-test}

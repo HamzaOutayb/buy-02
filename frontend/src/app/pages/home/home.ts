@@ -3,6 +3,7 @@ import { DecimalPipe, SlicePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Product, ProductService } from '../../services/product-service';
 import { UserContextService } from '../../services/user-context-service';
+import { CartService } from '../../services/cart-service';
 
 @Component({
   selector: 'app-home',
@@ -13,8 +14,10 @@ import { UserContextService } from '../../services/user-context-service';
 export class Home implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly userContext = inject(UserContextService);
+  private readonly cartService = inject(CartService);
   readonly user = this.userContext.user;
   readonly userLoading = this.userContext.isLoading;
+  readonly cartCount = this.cartService.count;
   readonly products = signal<Product[]>([]);
   readonly isLoading = signal(true);
   readonly hasError = signal(false);
