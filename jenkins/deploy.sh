@@ -6,7 +6,7 @@ cd "$repo_root"
 
 namespace=mr-jenk
 release="build-${BUILD_NUMBER:-$(date +%Y%m%d%H%M%S)}"
-services='server user product media gateway frontend'
+services='server user order product media gateway frontend'
 
 rollback() {
     echo 'Deployment failed. Restoring previous images.'
