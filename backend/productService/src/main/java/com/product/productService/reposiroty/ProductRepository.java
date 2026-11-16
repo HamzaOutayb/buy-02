@@ -15,8 +15,8 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 	@Aggregation(pipeline = {
 			"{ '$match': { '$and': [ "
 					+ "{ '$or': [ "
-					+ "{ 'name': { '$regex': ?0, '$options': 'i' } }, "
-					+ "{ 'description': { '$regex': ?0, '$options': 'i' } } "
+					+ "{ '$expr': { '$gte': [ { '$indexOfCP': [ { '$toLower': { '$ifNull': [ '$name', '' ] } }, ?0 ] }, 0 ] } }, "
+					+ "{ '$expr': { '$gte': [ { '$indexOfCP': [ { '$toLower': { '$ifNull': [ '$description', '' ] } }, ?0 ] }, 0 ] } } "
 					+ "] }, "
 					+ "{ 'categories': { '$all': ?1 } } "
 					+ "] } }"

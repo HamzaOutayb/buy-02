@@ -2,6 +2,7 @@ package com.product.productService.service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -30,7 +31,7 @@ public class ProductService {
     private final MediaClient mediaClient;
 
     public List<ProductRes> search(String keyword, List<String> categories) {
-        String normalizedKeyword = keyword == null ? ".*" : keyword.trim();
+        String normalizedKeyword = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
         List<String> normalizedCategories = categories == null ? List.of() : categories;
         return productRepository.search(normalizedKeyword, normalizedCategories).stream()
                 .map(product -> toResponse(product, mediaClient.getImageUrls(product.getId())))

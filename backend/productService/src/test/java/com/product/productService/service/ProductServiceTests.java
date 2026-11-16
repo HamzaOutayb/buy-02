@@ -73,13 +73,13 @@ public class ProductServiceTests {
     }
 
     @Test
-    void searchUsesMatchAllRegexWhenKeywordIsMissing() {
-        when(productRepository.search(".*", List.of())).thenReturn(List.of());
+    void searchUsesEmptyKeywordWhenKeywordIsMissing() {
+        when(productRepository.search("", List.of())).thenReturn(List.of());
 
         List<ProductRes> result = productService.search(null, null);
 
         assertEquals(List.of(), result);
-        verify(productRepository).search(".*", List.of());
+        verify(productRepository).search("", List.of());
     }
 
     @Test
