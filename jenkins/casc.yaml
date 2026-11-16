@@ -69,9 +69,9 @@ jobs:
               github {
                 id('buy-01-github')
                 credentialsId('github-api')
-                repoOwner('xHozey')
-                repository('safe-zone')
-                repositoryUrl('https://github.com/xHozey/safe-zone')
+                repoOwner('HamzaOutayb')
+                repository('buy-02')
+                repositoryUrl('https://github.com/HamzaOutayb/buy-02.git')
                 configuredByUrl(false)
 
                 traits {
