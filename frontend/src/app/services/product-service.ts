@@ -3,6 +3,13 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export const PRODUCT_CATEGORIES = [
+  'electronics', 'clothing', 'shoes', 'home', 'furniture',
+  'beauty', 'sports', 'outdoors', 'toys', 'books',
+  'music', 'art', 'jewelry', 'automotive', 'pets',
+  'grocery', 'health', 'office', 'garden', 'travel',
+] as const;
+
 export interface Product {
   id: string;
   name: string;
@@ -11,6 +18,7 @@ export interface Product {
   quantity: number;
   userId: string;
   imageUrls: string[];
+  categories: string[];
 }
 
 export interface ProductRequest {
@@ -19,6 +27,7 @@ export interface ProductRequest {
   price: number;
   quantity: number;
   imageUrls: string[];
+  categories: string[];
 }
 
 @Injectable({ providedIn: 'root' })

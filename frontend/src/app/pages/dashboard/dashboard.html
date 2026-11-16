@@ -97,6 +97,30 @@
             </div>
           </div>
 
+          <fieldset>
+            <legend class="text-sm font-bold">Categories</legend>
+            <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Product categories">
+              @for (category of productCategories; track category) {
+              <button type="button" (click)="toggleCategory(category)" [attr.aria-pressed]="isCategorySelected(category)"
+                class="flex min-h-10 items-center justify-between rounded-lg border px-3 py-2 text-left text-xs font-bold capitalize transition"
+                [class.border-amber-300]="isCategorySelected(category)"
+                [class.bg-amber-300]="isCategorySelected(category)"
+                [class.text-slate-950]="isCategorySelected(category)"
+                [class.border-white/15]="!isCategorySelected(category)"
+                [class.bg-white/5]="!isCategorySelected(category)"
+                [class.text-slate-300]="!isCategorySelected(category)"
+                [class.hover:border-amber-300]="!isCategorySelected(category)"
+                [class.hover:text-white]="!isCategorySelected(category)">
+                <span>{{ category | titlecase }}</span>
+                @if (isCategorySelected(category)) { <span aria-hidden="true">&#10003;</span> }
+              </button>
+              }
+            </div>
+            <p class="mt-2 text-xs text-slate-400">
+              {{ productForm.controls.categories.value.length }} selected
+            </p>
+          </fieldset>
+
           <label class="block text-sm font-bold" for="product-images">Images
             <input #productImagesInput id="product-images" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png"
               multiple (change)="onFilesSelected($event)"
