@@ -70,7 +70,7 @@ jobs:
                 id('buy-01-github')
                 credentialsId('github-api')
                 repoOwner('HamzaOutayb')
-                repository('safe-zone')
+                repository('buy-02')
                 repositoryUrl('https://github.com/HamzaOutayb/buy-02.git')
                 configuredByUrl(false)
 
