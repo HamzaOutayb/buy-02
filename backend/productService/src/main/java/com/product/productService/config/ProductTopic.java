@@ -9,6 +9,8 @@ import org.springframework.kafka.config.TopicBuilder;
 public class ProductTopic {
 	public static final String NAME = "product-topic";
 
+
+	
 	@Bean
 	public NewTopic productTopicBean() {
 		return TopicBuilder.name(NAME)
