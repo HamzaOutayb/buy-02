@@ -21,10 +21,17 @@ public class InventoryEventConsumer {
                 .orElseThrow(() -> new IllegalStateException("Product not found: " + event.productId()));
         int currentQuantity = product.getQuantity() == null ? 0 : product.getQuantity();
         int orderedQuantity = event.quantity() == null ? 0 : event.quantity();
-        if (orderedQuantity <= 0 || currentQuantity < orderedQuantity) {
-            throw new IllegalStateException("Insufficient stock for product: " + event.productId());
+        if (orderedQuantity <= 0) {
+            throw new IllegalStateException("Invalid quantity for product: " + event.productId());
         }
-        product.setQuantity(currentQuantity - orderedQuantity);
+        if ("INCREASE".equals(event.operation())) {
+            product.setQuantity(currentQuantity + orderedQuantity);
+        } else {
+            if (currentQuantity < orderedQuantity) {
+                throw new IllegalStateException("Insufficient stock for product: " + event.productId());
+            }
+            product.setQuantity(currentQuantity - orderedQuantity);
+        }
         productRepository.save(product);
     }
 }

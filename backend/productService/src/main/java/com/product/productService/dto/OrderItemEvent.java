@@ -3,5 +3,6 @@ package com.product.productService.dto;
 public record OrderItemEvent(
         String orderId,
         String productId,
-        Integer quantity) {
+        Integer quantity,
+        String operation) {
 }

@@ -369,6 +369,9 @@ public class OrderService {
         order.setUpdatedAt(Instant.now());
         Order saved = orderRepository.save(order);
         publishEvent("ORDER_CANCELLED", saved);
+        if (current == OrderStatus.CONFIRMED) {
+            publishInventoryEvents(saved, "INCREASE");
+        }
         return toOrderRes(saved);
     }
 
@@ -390,13 +393,17 @@ public class OrderService {
     }
 
     private void publishInventoryEvents(Order order) {
+        publishInventoryEvents(order, "DECREASE");
+    }
+
+    private void publishInventoryEvents(Order order, String operation) {
         if (order.getItems() == null) {
             return;
         }
         order.getItems().forEach(item -> kafkaTemplate.send(
                 OrderTopic.INVENTORY_NAME,
                 item.getProductId(),
-                new OrderItemEvent(order.getId(), item.getProductId(), item.getQuantity())));
+                new OrderItemEvent(order.getId(), item.getProductId(), item.getQuantity(), operation)));
     }
 
     private String generateOrderReference() {
