@@ -1,23 +1,23 @@
 package com.orderService.orderService.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,7 +37,7 @@ import com.orderService.orderService.dto.SellerSalesAnalyticsRes;
 import com.orderService.orderService.enums.OrderStatus;
 import com.orderService.orderService.enums.PaymentMethod;
 import com.orderService.orderService.enums.PaymentStatus;
-import com.orderService.orderService.events.OrderEvent;
+import com.orderService.orderService.events.OrderItemEvent;
 import com.orderService.orderService.model.DeliveryAddress;
 import com.orderService.orderService.model.Order;
 import com.orderService.orderService.model.OrderItem;
@@ -53,7 +53,7 @@ public class OrderServiceTests {
     private ProductClient productClient;
 
     @Mock
-    private KafkaTemplate<String, OrderEvent> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @Mock
     private MongoTemplate mongoTemplate;
@@ -228,6 +228,23 @@ public class OrderServiceTests {
     }
 
     @Test
+    void testSellerConfirmOrder_publishesInventoryDecreaseForEachItem() {
+        Order order = order("order-1", "customer-1", OrderStatus.PENDING);
+        order.setItems(List.of(item("product-1", "seller-1"), item("product-2", "seller-1")));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.confirmOrder("order-1", "seller-1");
+
+        ArgumentCaptor<OrderItemEvent> eventCaptor = ArgumentCaptor.forClass(OrderItemEvent.class);
+        verify(kafkaTemplate, times(2)).send(eq("inventory-events"), any(String.class), eventCaptor.capture());
+        assertEquals(List.of("product-1", "product-2"),
+                eventCaptor.getAllValues().stream().map(OrderItemEvent::productId).toList());
+        assertEquals(List.of("DECREASE", "DECREASE"),
+                eventCaptor.getAllValues().stream().map(OrderItemEvent::operation).toList());
+    }
+
+    @Test
     void testSellerConfirmOrder_forbidden() {
         Order order = order("order-1", "customer-1", OrderStatus.PENDING);
         order.setItems(List.of(item("product-1", "seller-1")));
@@ -273,6 +290,33 @@ public class OrderServiceTests {
         OrderRes result = orderService.cancelSellerOrder("order-1", "seller-1");
 
         assertEquals(OrderStatus.CANCELLED, result.status());
+    }
+
+    @Test
+    void testSellerCancelOrder_publishesInventoryIncreaseForConfirmedItems() {
+        Order order = order("order-1", "customer-1", OrderStatus.CONFIRMED);
+        order.setItems(List.of(item("product-1", "seller-1")));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.cancelSellerOrder("order-1", "seller-1");
+
+        ArgumentCaptor<OrderItemEvent> eventCaptor = ArgumentCaptor.forClass(OrderItemEvent.class);
+        verify(kafkaTemplate).send(eq("inventory-events"), eq("product-1"), eventCaptor.capture());
+        assertEquals("order-1", eventCaptor.getValue().orderId());
+        assertEquals("INCREASE", eventCaptor.getValue().operation());
+    }
+
+    @Test
+    void testCancelPendingSellerOrder_doesNotPublishInventoryRefund() {
+        Order order = order("order-1", "customer-1", OrderStatus.PENDING);
+        order.setItems(List.of(item("product-1", "seller-1")));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.cancelSellerOrder("order-1", "seller-1");
+
+        verify(kafkaTemplate, never()).send(eq("inventory-events"), any(String.class), any(Object.class));
     }
 
     @Test
