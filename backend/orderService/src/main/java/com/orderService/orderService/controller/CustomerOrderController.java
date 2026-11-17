@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.orderService.orderService.dto.CreateOrderReq;
+import com.orderService.orderService.dto.BuyerAnalyticsRes;
 import com.orderService.orderService.dto.OrderRes;
 import com.orderService.orderService.dto.OrderSummaryRes;
 import com.orderService.orderService.enums.OrderStatus;
@@ -51,6 +52,11 @@ public class CustomerOrderController {
             Authentication auth) {
         Pageable pageable = PageRequest.of(page, size);
         return orderService.getMyOrders(auth.getName(), status, dateFrom, dateTo, orderReference, pageable);
+    }
+
+    @GetMapping("/analytics")
+    public BuyerAnalyticsRes getBuyerAnalytics(Authentication auth) {
+        return orderService.getBuyerAnalytics(auth.getName());
     }
 
     @GetMapping("/{id}")

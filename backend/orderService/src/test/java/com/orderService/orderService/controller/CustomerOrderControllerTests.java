@@ -1,18 +1,17 @@
 package com.orderService.orderService.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.time.Instant;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -20,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 
+import com.orderService.orderService.dto.BuyerAnalyticsRes;
+import com.orderService.orderService.dto.BuyerProductAnalyticsRes;
 import com.orderService.orderService.dto.CreateOrderReq;
 import com.orderService.orderService.dto.DeliveryAddressRes;
 import com.orderService.orderService.dto.OrderRes;
@@ -71,6 +72,19 @@ class CustomerOrderControllerTests {
 
         assertEquals(1, res.getTotalElements());
         verify(orderService).getMyOrders(eq("cust-1"), eq(OrderStatus.PENDING), any(), any(), eq("REF1"), any());
+    }
+
+    @Test
+    void getBuyerAnalytics_delegatesToAuthenticatedBuyer() {
+        when(authentication.getName()).thenReturn("cust-1");
+        BuyerAnalyticsRes expected = new BuyerAnalyticsRes(150.0,
+                List.of(new BuyerProductAnalyticsRes("p1", "Product 1", 2, 150.0)));
+        when(orderService.getBuyerAnalytics("cust-1")).thenReturn(expected);
+
+        BuyerAnalyticsRes result = controller.getBuyerAnalytics(authentication);
+
+        assertEquals(expected, result);
+        verify(orderService).getBuyerAnalytics("cust-1");
     }
 
     @Test
