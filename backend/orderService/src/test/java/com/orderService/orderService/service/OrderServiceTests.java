@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +33,7 @@ import com.orderService.orderService.dto.CreateOrderReq;
 import com.orderService.orderService.dto.OrderRes;
 import com.orderService.orderService.dto.OrderSummaryRes;
 import com.orderService.orderService.dto.ProductInfo;
+import com.orderService.orderService.dto.SellerSalesAnalyticsRes;
 import com.orderService.orderService.enums.OrderStatus;
 import com.orderService.orderService.enums.PaymentMethod;
 import com.orderService.orderService.enums.PaymentStatus;
@@ -74,7 +76,8 @@ public class OrderServiceTests {
 
         CreateOrderReq req = new CreateOrderReq(
             List.of(new CreateOrderReq.OrderItemReq("product-1", 2)),
-            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St")
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
         );
 
         OrderRes result = orderService.createOrder(req, authentication);
@@ -82,7 +85,10 @@ public class OrderServiceTests {
         assertNotNull(result);
         assertEquals("ORD-1", result.orderReference());
         assertEquals(OrderStatus.PENDING, result.status());
-        verify(orderRepository).save(any(Order.class));
+        assertEquals(PaymentMethod.CASH_ON_DELIVERY, result.paymentMethod());
+        ArgumentCaptor<Order> savedOrder = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(savedOrder.capture());
+        assertEquals(PaymentMethod.CASH_ON_DELIVERY, savedOrder.getValue().getPaymentMethod());
     }
 
     @Test
@@ -93,7 +99,8 @@ public class OrderServiceTests {
 
         CreateOrderReq req = new CreateOrderReq(
             List.of(new CreateOrderReq.OrderItemReq("product-1", 5)),
-            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St")
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
         );
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
@@ -111,7 +118,8 @@ public class OrderServiceTests {
 
         CreateOrderReq req = new CreateOrderReq(
             List.of(new CreateOrderReq.OrderItemReq("missing-product", 1)),
-            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St")
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
         );
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
@@ -186,6 +194,25 @@ public class OrderServiceTests {
 
         assertEquals(1, result.getTotalElements());
         assertEquals("ORD-1", result.getContent().get(0).orderReference());
+    }
+
+    @Test
+    void testGetSellerAnalytics_countsOnlyDeliveredSellerItemsAsSales() {
+        Order delivered = order("delivered", "customer-1", OrderStatus.DELIVERED);
+        delivered.setItems(List.of(
+                new OrderItem("p1", "seller-1", "Product 1", "", 25.0, 2, 50.0),
+                new OrderItem("p2", "seller-2", "Other seller product", "", 40.0, 1, 40.0)));
+        Order pending = order("pending", "customer-2", OrderStatus.PENDING);
+        pending.setItems(List.of(item("p3", "seller-1")));
+        when(mongoTemplate.find(any(Query.class), eq(Order.class))).thenReturn(List.of(delivered, pending));
+
+        SellerSalesAnalyticsRes result = orderService.getSellerAnalytics("seller-1");
+
+        assertEquals(2, result.totalOrders());
+        assertEquals(1, result.pendingOrders());
+        assertEquals(1, result.completedOrders());
+        assertEquals(2, result.unitsSold());
+        assertEquals(50.0, result.revenue());
     }
 
     @Test

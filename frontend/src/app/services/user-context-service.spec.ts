@@ -5,6 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { CartService } from './cart-service';
 import { UserContextService, UserProfile } from './user-context-service';
 
 describe('UserContextService', () => {
@@ -49,11 +50,26 @@ describe('UserContextService', () => {
     const req = httpTesting.expectOne('https://localhost:8080/api/v1/users/me');
     expect(req.request.method).toBe('GET');
     req.flush(profile);
+    httpTesting.expectOne('https://localhost:8080/api/v1/cart').flush([]);
 
     expect(completed).toBe(true);
     expect(service.user()).toEqual(profile);
     expect(service.isLoading()).toBe(false);
     expect(localStorage.getItem('auth_token')).toBe('Bearer token');
+  });
+
+  it('shares profile lookup and does not request a cart for sellers', () => {
+    const seller: UserProfile = { ...profile, role: 'SELLER' };
+    localStorage.setItem('auth_token', 'seller-token');
+
+    service.load().subscribe();
+    service.load().subscribe();
+
+    const req = httpTesting.expectOne('https://localhost:8080/api/v1/users/me');
+    req.flush(seller);
+
+    expect(service.user()).toEqual(seller);
+    httpTesting.expectNone('https://localhost:8080/api/v1/cart');
   });
 
   it('clears the token and profile when loading the profile fails', () => {
@@ -90,6 +106,18 @@ describe('UserContextService', () => {
   });
 
   it('clears the token and user when logging out', () => {
+    localStorage.setItem('auth_token', 'test-token');
+    const cartService = TestBed.inject(CartService);
+    cartService.addToCart({
+      productId: 'seller-product',
+      productName: 'Seller product',
+      price: 25,
+      quantity: 1,
+      imageUrl: '',
+      sellerId: 'seller-1',
+      maxQuantity: 5,
+    });
+    httpTesting.expectOne('https://localhost:8080/api/v1/cart').flush([]);
     localStorage.setItem('auth_token', 'Bearer token');
     service.updateProfile({
       name: profile.name,
@@ -103,5 +131,7 @@ describe('UserContextService', () => {
 
     expect(localStorage.getItem('auth_token')).toBeNull();
     expect(service.user()).toBeNull();
+    expect(cartService.items()).toEqual([]);
+    expect(localStorage.getItem('cart_items')).toBeNull();
   });
 });

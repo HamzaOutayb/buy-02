@@ -18,6 +18,7 @@ export interface OrderItemReq {
 export interface CreateOrderReq {
   items: OrderItemReq[];
   deliveryAddress: DeliveryAddress;
+  paymentMethod: PaymentMethod;
 }
 
 export interface OrderItem {
@@ -65,6 +66,14 @@ export interface OrderSummary {
   total: number;
   paymentMethod: PaymentMethod;
   createdAt: string;
+}
+
+export interface SellerSalesAnalytics {
+  totalOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  unitsSold: number;
+  revenue: number;
 }
 
 export interface OrderPage {
@@ -155,6 +164,10 @@ export class OrderService {
     if (params.page !== undefined) p = p.set('page', params.page);
     if (params.size !== undefined) p = p.set('size', params.size);
     return this.http.get<OrderPage>(`${this.apiUrl}/seller`, { params: p });
+  }
+
+  getSellerAnalytics(): Observable<SellerSalesAnalytics> {
+    return this.http.get<SellerSalesAnalytics>(`${this.apiUrl}/seller/analytics`);
   }
 
   getSellerOrderById(id: string): Observable<Order> {

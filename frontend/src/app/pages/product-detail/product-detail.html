@@ -1,25 +1,4 @@
 <main class="min-h-screen bg-[#f4f1eb] text-slate-900">
-  <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 sm:px-8" aria-label="Product navigation">
-    <a routerLink="/" class="text-xl font-black tracking-tight">buy<span class="text-teal-700">/01</span></a>
-    <div class="flex items-center gap-3 text-sm font-bold">
-      <a routerLink="/cart" class="relative flex items-center gap-1 text-slate-700 transition hover:text-teal-700" aria-label="Shopping cart">
-        <span>🛒</span>
-        <span class="hidden sm:inline">Cart</span>
-        @if (cartCount() > 0) {
-          <span class="flex h-5 min-w-5 items-center justify-center rounded-full bg-teal-800 px-1.5 text-[11px] font-bold text-white">{{ cartCount() }}</span>
-        }
-      </a>
-      <a routerLink="/" class="text-slate-600 transition hover:text-teal-700">Browse</a>
-      @if (user(); as currentUser) {
-        <a routerLink="/orders" class="text-slate-600 transition hover:text-teal-700">Orders</a>
-        @if (currentUser.role === 'SELLER') { <a routerLink="/dashboard" class="text-slate-600 transition hover:text-teal-700">Dashboard</a> }
-        <a routerLink="/profile" class="hidden text-slate-500 transition hover:text-teal-700 sm:inline">Hi, {{ currentUser.name }}</a>
-      } @else {
-        <a routerLink="/login" class="text-slate-600 transition hover:text-teal-700">Sign in</a>
-      }
-    </div>
-  </nav>
-
   <section class="mx-auto max-w-6xl px-5 pb-20 pt-8 sm:px-8" aria-labelledby="product-title">
     <nav aria-label="Breadcrumb" class="text-sm text-slate-500">
       <a routerLink="/" class="font-semibold text-teal-800 transition hover:text-teal-950">Home</a>
@@ -63,7 +42,8 @@
 
           <!-- Purchase Controls -->
           @if (currentProduct.quantity > 0) {
-            <div class="mt-6 space-y-4">
+                @if (user()?.role === 'CLIENT') {
+                <div class="mt-6 space-y-4">
               <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-slate-700">Quantity</span>
                 <div class="flex items-center rounded-lg border border-slate-300 overflow-hidden bg-white">
@@ -87,6 +67,7 @@
                 Add to Cart • ${{ (currentProduct.price * selectedQuantity()) | number:'1.2-2' }}
               </button>
             </div>
+            }
           } @else {
             <div class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-center">
               <p class="font-bold text-sm text-red-700">This product is currently out of stock.</p>

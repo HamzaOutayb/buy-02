@@ -45,7 +45,8 @@ class CustomerOrderControllerTests {
     void createOrder_returnsCreated() {
         CreateOrderReq req = new CreateOrderReq(
             List.of(new CreateOrderReq.OrderItemReq("p1", 2)),
-            new CreateOrderReq.DeliveryAddressReq("Jane", "0612345678", "Casablanca", "Bd Zerktouni")
+            new CreateOrderReq.DeliveryAddressReq("Jane", "0612345678", "Casablanca", "Bd Zerktouni"),
+            PaymentMethod.CASH_ON_DELIVERY
         );
         OrderRes expected = orderRes();
         when(orderService.createOrder(req, authentication)).thenReturn(expected);

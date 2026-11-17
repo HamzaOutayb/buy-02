@@ -9,9 +9,12 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import com.orderService.orderService.enums.PaymentMethod;
+
 public record CreateOrderReq(
     @NotNull @NotEmpty List<@Valid OrderItemReq> items,
-    @NotNull @Valid DeliveryAddressReq deliveryAddress
+    @NotNull @Valid DeliveryAddressReq deliveryAddress,
+    @NotNull PaymentMethod paymentMethod
 ) {
     public record OrderItemReq(
         @NotBlank String productId,

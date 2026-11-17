@@ -13,6 +13,7 @@ import { OrderDetail } from './pages/order-detail/order-detail';
 import { SellerOrders } from './pages/seller-orders/seller-orders';
 import { sellerGuard } from './guards/seller.guard';
 import { authGuard } from './guards/auth.guard';
+import { clientGuard } from './guards/client.guard';
 
 export const routes: Routes = [
   {
@@ -26,25 +27,27 @@ export const routes: Routes = [
   {
     path: 'profile',
     component: Profile,
+    canActivate: [authGuard],
   },
   {
     path: 'cart',
     component: Cart,
+    canActivate: [clientGuard],
   },
   {
     path: 'checkout',
     component: Checkout,
-    canActivate: [authGuard],
+    canActivate: [clientGuard],
   },
   {
     path: 'orders/:id',
     component: OrderDetail,
-    canActivate: [authGuard],
+    canActivate: [clientGuard],
   },
   {
     path: 'orders',
     component: Orders,
-    canActivate: [authGuard],
+    canActivate: [clientGuard],
   },
   {
     path: 'products/:id',

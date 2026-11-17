@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe, NgClass, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   Order,
@@ -11,22 +11,19 @@ import {
   OrderSummary,
   statusBadgeClass,
 } from '../../services/order-service';
-import { UserContextService } from '../../services/user-context-service';
 
 @Component({
   selector: 'app-seller-orders',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, FormsModule, NgClass, RouterLink, SlicePipe],
+  imports: [DatePipe, DecimalPipe, FormsModule, NgClass, SlicePipe],
   templateUrl: './seller-orders.html',
   styleUrl: './seller-orders.css',
 })
 export class SellerOrders implements OnInit {
   private readonly orderService = inject(OrderService);
-  private readonly userContext = inject(UserContextService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
 
-  readonly user = this.userContext.user;
   readonly orders = signal<OrderSummary[]>([]);
   readonly totalElements = signal(0);
   readonly totalPages = signal(0);
@@ -218,8 +215,4 @@ export class SellerOrders implements OnInit {
     return statusBadgeClass(status);
   }
 
-  logout(): void {
-    this.userContext.logout();
-    this.router.navigateByUrl('/');
-  }
 }

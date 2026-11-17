@@ -3,8 +3,6 @@ import { DecimalPipe, SlicePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PRODUCT_CATEGORIES, Product, ProductService } from '../../services/product-service';
-import { UserContextService } from '../../services/user-context-service';
-import { CartService } from '../../services/cart-service';
 
 @Component({
   selector: 'app-home',
@@ -14,11 +12,6 @@ import { CartService } from '../../services/cart-service';
 })
 export class Home implements OnInit {
   private readonly productService = inject(ProductService);
-  private readonly userContext = inject(UserContextService);
-  private readonly cartService = inject(CartService);
-  readonly user = this.userContext.user;
-  readonly userLoading = this.userContext.isLoading;
-  readonly cartCount = this.cartService.count;
   readonly products = signal<Product[]>([]);
   readonly isLoading = signal(true);
   readonly hasError = signal(false);
@@ -74,7 +67,4 @@ export class Home implements OnInit {
     return product.imageUrls[0];
   }
 
-  logout(): void {
-    this.userContext.logout();
-  }
 }

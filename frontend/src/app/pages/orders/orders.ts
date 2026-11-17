@@ -10,7 +10,6 @@ import {
   OrderSummary,
   statusBadgeClass,
 } from '../../services/order-service';
-import { UserContextService } from '../../services/user-context-service';
 
 @Component({
   selector: 'app-orders',
@@ -21,11 +20,9 @@ import { UserContextService } from '../../services/user-context-service';
 })
 export class Orders implements OnInit {
   private readonly orderService = inject(OrderService);
-  private readonly userContext = inject(UserContextService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
 
-  readonly user = this.userContext.user;
   readonly orders = signal<OrderSummary[]>([]);
   readonly totalElements = signal(0);
   readonly totalPages = signal(0);
@@ -173,8 +170,4 @@ export class Orders implements OnInit {
     return statusBadgeClass(status);
   }
 
-  logout(): void {
-    this.userContext.logout();
-    this.router.navigateByUrl('/');
-  }
 }

@@ -1,20 +1,4 @@
 <main class="min-h-screen bg-[#f4f1eb] text-slate-900">
-  <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 sm:px-8" aria-label="Seller orders navigation">
-    <a routerLink="/" class="text-xl font-black tracking-tight">buy<span class="text-teal-700">/01</span></a>
-    <div class="flex items-center gap-3 text-sm font-bold">
-      <a routerLink="/dashboard" class="text-slate-600 transition hover:text-teal-700">Products</a>
-      <a routerLink="/dashboard/orders" class="text-teal-700">Orders</a>
-      <a routerLink="/" class="text-slate-600 transition hover:text-teal-700">Browse</a>
-      @if (user(); as currentUser) {
-        <a routerLink="/profile" class="hidden text-slate-500 transition hover:text-teal-700 sm:inline">Hi, {{ currentUser.name }}</a>
-        <button type="button" (click)="logout()"
-          class="rounded-full border border-slate-300 px-4 py-2 text-slate-700 transition hover:border-teal-700 hover:text-teal-700">
-          Sign out
-        </button>
-      }
-    </div>
-  </nav>
-
   <section class="mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8">
     <div class="mb-8 border-b border-slate-300 pb-6">
       <p class="mb-2 text-xs font-bold uppercase tracking-[0.22em] text-teal-700">Seller Studio</p>

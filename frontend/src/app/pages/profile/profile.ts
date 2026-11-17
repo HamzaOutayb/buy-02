@@ -1,8 +1,10 @@
+import { DecimalPipe } from '@angular/common';
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MediaService } from '../../services/media-service';
+import { OrderService, SellerSalesAnalytics } from '../../services/order-service';
 import { UserContextService } from '../../services/user-context-service';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
@@ -10,19 +12,23 @@ const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
 
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [DecimalPipe, ReactiveFormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
 export class Profile implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly mediaService = inject(MediaService);
+  private readonly orderService = inject(OrderService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly router = inject(Router);
   private readonly userContext = inject(UserContextService);
   private hasInitializedForm = false;
 
   readonly user = this.userContext.user;
+  readonly analytics = signal<SellerSalesAnalytics | null>(null);
+  readonly analyticsError = signal('');
+  readonly isLoadingAnalytics = signal(false);
   readonly selectedFile = signal<File | null>(null);
   readonly previewUrl = signal<string | null>(null);
   readonly isSubmitting = signal(false);
@@ -48,7 +54,11 @@ export class Profile implements OnInit {
   ngOnInit(): void {
     if (!localStorage.getItem('auth_token')) {
       this.router.navigateByUrl('/login');
+      return;
     }
+    this.userContext.load().subscribe(() => {
+      if (this.user()?.role === 'SELLER') this.loadSellerAnalytics();
+    });
   }
 
   onFileSelected(event: Event): void {
@@ -95,11 +105,6 @@ export class Profile implements OnInit {
     this.updateProfile(currentUser?.avatar ?? null);
   }
 
-  logout(): void {
-    this.userContext.logout();
-    this.router.navigateByUrl('/');
-  }
-
   private updateProfile(avatar: string | null): void {
     const values = this.profileForm.getRawValue();
     this.userContext.updateProfile({ ...values, avatar }).subscribe({
@@ -112,6 +117,20 @@ export class Profile implements OnInit {
       error: (error: { error?: { message?: string } }) => this.finishWithError(
         error.error?.message ?? 'Your profile could not be updated. Check your password and try again.',
       ),
+    });
+  }
+
+  private loadSellerAnalytics(): void {
+    this.isLoadingAnalytics.set(true);
+    this.orderService.getSellerAnalytics().subscribe({
+      next: (analytics) => {
+        this.analytics.set(analytics);
+        this.isLoadingAnalytics.set(false);
+      },
+      error: () => {
+        this.analyticsError.set('Sales analytics could not be loaded.');
+        this.isLoadingAnalytics.set(false);
+      },
     });
   }
 

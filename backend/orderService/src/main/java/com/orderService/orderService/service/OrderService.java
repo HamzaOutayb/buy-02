@@ -28,6 +28,7 @@ import com.orderService.orderService.dto.OrderItemRes;
 import com.orderService.orderService.dto.OrderRes;
 import com.orderService.orderService.dto.OrderSummaryRes;
 import com.orderService.orderService.dto.ProductInfo;
+import com.orderService.orderService.dto.SellerSalesAnalyticsRes;
 import com.orderService.orderService.enums.OrderStatus;
 import com.orderService.orderService.enums.PaymentMethod;
 import com.orderService.orderService.enums.PaymentStatus;
@@ -99,7 +100,7 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING);
         order.setItems(items);
         order.setDeliveryAddress(deliveryAddress);
-        order.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+        order.setPaymentMethod(req.paymentMethod());
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setSubtotal(subtotal);
         order.setShippingFee(shippingFee);
@@ -244,6 +245,32 @@ public class OrderService {
         long total = mongoTemplate.count(new Query(criteria), Order.class);
         List<Order> orders = mongoTemplate.find(query, Order.class);
         return new PageImpl<>(orders, sortedPageable, total).map(o -> toSellerSummaryRes(o, sellerId));
+    }
+
+    public SellerSalesAnalyticsRes getSellerAnalytics(String sellerId) {
+        Query query = Query.query(Criteria.where("items.sellerId").is(sellerId));
+        List<Order> orders = mongoTemplate.find(query, Order.class);
+        long pendingOrders = orders.stream()
+                .filter(order -> order.getStatus() == OrderStatus.PENDING)
+                .count();
+        long completedOrders = orders.stream()
+                .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
+                .count();
+        long unitsSold = orders.stream()
+                .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
+                .filter(order -> order.getItems() != null)
+                .flatMap(order -> order.getItems().stream())
+                .filter(item -> sellerId.equals(item.getSellerId()))
+                .mapToLong(item -> item.getQuantity() == null ? 0 : item.getQuantity())
+                .sum();
+        double revenue = orders.stream()
+                .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
+                .filter(order -> order.getItems() != null)
+                .flatMap(order -> order.getItems().stream())
+                .filter(item -> sellerId.equals(item.getSellerId()))
+                .mapToDouble(item -> item.getSubtotal() == null ? 0.0 : item.getSubtotal())
+                .sum();
+        return new SellerSalesAnalyticsRes(orders.size(), pendingOrders, completedOrders, unitsSold, revenue);
     }
 
     public OrderRes getSellerOrderById(String orderId, String sellerId) {
