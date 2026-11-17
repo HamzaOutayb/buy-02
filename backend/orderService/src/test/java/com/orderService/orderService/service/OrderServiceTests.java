@@ -32,6 +32,7 @@ import com.orderService.orderService.dto.CreateOrderReq;
 import com.orderService.orderService.dto.OrderRes;
 import com.orderService.orderService.dto.OrderSummaryRes;
 import com.orderService.orderService.dto.ProductInfo;
+import com.orderService.orderService.dto.SellerSalesAnalyticsRes;
 import com.orderService.orderService.enums.OrderStatus;
 import com.orderService.orderService.enums.PaymentMethod;
 import com.orderService.orderService.enums.PaymentStatus;
@@ -186,6 +187,25 @@ public class OrderServiceTests {
 
         assertEquals(1, result.getTotalElements());
         assertEquals("ORD-1", result.getContent().get(0).orderReference());
+    }
+
+    @Test
+    void testGetSellerAnalytics_countsOnlyDeliveredSellerItemsAsSales() {
+        Order delivered = order("delivered", "customer-1", OrderStatus.DELIVERED);
+        delivered.setItems(List.of(
+                new OrderItem("p1", "seller-1", "Product 1", "", 25.0, 2, 50.0),
+                new OrderItem("p2", "seller-2", "Other seller product", "", 40.0, 1, 40.0)));
+        Order pending = order("pending", "customer-2", OrderStatus.PENDING);
+        pending.setItems(List.of(item("p3", "seller-1")));
+        when(mongoTemplate.find(any(Query.class), eq(Order.class))).thenReturn(List.of(delivered, pending));
+
+        SellerSalesAnalyticsRes result = orderService.getSellerAnalytics("seller-1");
+
+        assertEquals(2, result.totalOrders());
+        assertEquals(1, result.pendingOrders());
+        assertEquals(1, result.completedOrders());
+        assertEquals(2, result.unitsSold());
+        assertEquals(50.0, result.revenue());
     }
 
     @Test

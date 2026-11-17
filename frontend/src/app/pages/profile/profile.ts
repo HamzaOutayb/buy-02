@@ -1,7 +1,7 @@
 import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MediaService } from '../../services/media-service';
 import { UserContextService } from '../../services/user-context-service';
 
@@ -10,7 +10,7 @@ const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
 
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -93,11 +93,6 @@ export class Profile implements OnInit {
     }
 
     this.updateProfile(currentUser?.avatar ?? null);
-  }
-
-  logout(): void {
-    this.userContext.logout();
-    this.router.navigateByUrl('/');
   }
 
   private updateProfile(avatar: string | null): void {

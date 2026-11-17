@@ -1,8 +1,7 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CartService } from '../../services/cart-service';
-import { UserContextService } from '../../services/user-context-service';
 
 @Component({
   selector: 'app-cart',
@@ -11,15 +10,23 @@ import { UserContextService } from '../../services/user-context-service';
   templateUrl: './cart.html',
   styleUrl: './cart.css',
 })
-export class Cart {
+export class Cart implements OnInit {
   readonly cartService = inject(CartService);
-  private readonly userContext = inject(UserContextService);
   private readonly router = inject(Router);
 
   readonly items = this.cartService.items;
   readonly count = this.cartService.count;
   readonly subtotal = this.cartService.subtotal;
-  readonly user = this.userContext.user;
+  readonly syncError = this.cartService.syncError;
+  readonly isSyncing = this.cartService.isSyncing;
+  readonly isLoading = signal(true);
+
+  ngOnInit(): void {
+    this.cartService.loadForUser().subscribe({
+      next: () => this.isLoading.set(false),
+      error: () => this.isLoading.set(false),
+    });
+  }
 
   decreaseQuantity(productId: string, currentQty: number): void {
     if (currentQty <= 1) {
@@ -40,6 +47,7 @@ export class Cart {
   }
 
   proceedToCheckout(): void {
+    if (this.isSyncing() || this.syncError()) return;
     if (!localStorage.getItem('auth_token')) {
       this.router.navigateByUrl('/login');
       return;

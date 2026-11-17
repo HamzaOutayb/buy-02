@@ -21,7 +21,6 @@ export class ProductDetail implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
 
   readonly user = this.userContext.user;
-  readonly cartCount = this.cartService.count;
   readonly product = signal<Product | null>(null);
   readonly selectedImage = signal('');
   readonly selectedQuantity = signal(1);
@@ -66,6 +65,11 @@ export class ProductDetail implements OnInit {
   }
 
   addToCart(product: Product): void {
+    if (this.user()?.role !== 'CLIENT') {
+      this.router.navigateByUrl('/login');
+      return;
+    }
+
     const qty = this.selectedQuantity();
     const imageUrl = product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '';
 

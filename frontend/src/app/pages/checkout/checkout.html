@@ -1,10 +1,14 @@
 <main class="min-h-screen bg-[#f4f1eb] text-slate-900">
-  <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 sm:px-8">
-    <a routerLink="/" class="text-xl font-black tracking-tight">buy<span class="text-teal-700">/01</span></a>
-    <a routerLink="/cart" class="text-sm font-bold text-slate-600 transition hover:text-teal-700">← Back to Cart</a>
-  </nav>
-
   <section class="mx-auto max-w-2xl px-5 pb-24 pt-8 sm:px-8">
+    @if (isLoadingCart()) {
+      <div class="rounded-2xl border border-slate-200 bg-white p-8 text-center" role="status">
+        <p class="font-bold text-slate-700">Loading your saved cart...</p>
+      </div>
+    } @else if (cartLoadError()) {
+      <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-800" role="alert">
+        {{ cartLoadError() }} <a routerLink="/cart" class="font-bold underline">Return to cart</a>
+      </div>
+    } @else {
     <!-- Stepper -->
     <div class="mb-10 flex items-center gap-2">
       @for (label of ['Delivery', 'Review', 'Confirm']; track $index) {
@@ -27,6 +31,12 @@
         }
       }
     </div>
+
+    @if (errorMessage() && step() !== 3) {
+      <p class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        {{ errorMessage() }} <a routerLink="/cart" class="font-bold underline">Return to cart</a>
+      </p>
+    }
 
     <!-- Step 1: Address -->
     @if (step() === 1) {
@@ -69,7 +79,7 @@
               <p class="mt-1 text-xs text-red-600">Full address is required.</p>
             }
           </div>
-          <button type="submit" class="mt-2 h-12 w-full rounded-xl bg-[#172a2b] font-bold text-white transition hover:bg-teal-900">
+          <button type="submit" [disabled]="items().length === 0" class="mt-2 h-12 w-full rounded-xl bg-[#172a2b] font-bold text-white transition hover:bg-teal-900 disabled:cursor-not-allowed disabled:opacity-50">
             Continue to Review
           </button>
         </form>
@@ -163,6 +173,7 @@
           </button>
         </div>
       }
+    }
     }
   </section>
 </main>

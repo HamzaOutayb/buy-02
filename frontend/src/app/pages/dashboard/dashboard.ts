@@ -2,7 +2,6 @@ import { DecimalPipe, TitleCasePipe } from '@angular/common';
 import { Component, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Router, RouterLink } from '@angular/router';
 import { MediaService } from '../../services/media-service';
 import {
   PRODUCT_CATEGORIES,
@@ -10,7 +9,7 @@ import {
   ProductRequest,
   ProductService,
 } from '../../services/product-service';
-import { UserContextService } from '../../services/user-context-service';
+import { OrderService, SellerSalesAnalytics } from '../../services/order-service';
 
 interface ImagePreview {
   file: File;
@@ -23,7 +22,7 @@ const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
 
 @Component({
   selector: 'app-dashboard',
-  imports: [DecimalPipe, ReactiveFormsModule, RouterLink, TitleCasePipe],
+  imports: [DecimalPipe, ReactiveFormsModule, TitleCasePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
@@ -32,13 +31,13 @@ export class Dashboard implements OnDestroy, OnInit {
   private readonly mediaService = inject(MediaService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly productService = inject(ProductService);
-  private readonly router = inject(Router);
-  private readonly userContext = inject(UserContextService);
+  private readonly orderService = inject(OrderService);
 
   @ViewChild('productImagesInput') private productImagesInput?: ElementRef<HTMLInputElement>;
 
-  readonly user = this.userContext.user;
   readonly products = signal<Product[]>([]);
+  readonly analytics = signal<SellerSalesAnalytics | null>(null);
+  readonly analyticsError = signal('');
   readonly selectedFiles = signal<File[]>([]);
   readonly imagePreviews = signal<ImagePreview[]>([]);
   readonly existingImageUrls = signal<string[]>([]);
@@ -59,6 +58,10 @@ export class Dashboard implements OnDestroy, OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
+    this.orderService.getSellerAnalytics().subscribe({
+      next: (analytics) => this.analytics.set(analytics),
+      error: () => this.analyticsError.set('Sales analytics could not be loaded.'),
+    });
   }
 
   ngOnDestroy(): void {
@@ -211,11 +214,6 @@ export class Dashboard implements OnDestroy, OnInit {
         this.showError(message);
       },
     });
-  }
-
-  logout(): void {
-    this.userContext.logout();
-    this.router.navigateByUrl('/');
   }
 
   private saveProduct(upload: { imageUrls: string[] }, product: Product | null): void {

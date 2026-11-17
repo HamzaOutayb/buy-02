@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.orderService.orderService.dto.OrderRes;
 import com.orderService.orderService.dto.OrderSummaryRes;
+import com.orderService.orderService.dto.SellerSalesAnalyticsRes;
 import com.orderService.orderService.dto.UpdateStatusReq;
 import com.orderService.orderService.enums.OrderStatus;
 import com.orderService.orderService.service.OrderService;
@@ -32,6 +33,11 @@ import lombok.AllArgsConstructor;
 public class SellerOrderController {
 
     private final OrderService orderService;
+
+    @GetMapping("/analytics")
+    public SellerSalesAnalyticsRes getSellerAnalytics(Authentication auth) {
+        return orderService.getSellerAnalytics(auth.getName());
+    }
 
     @GetMapping
     public Page<OrderSummaryRes> getSellerOrders(

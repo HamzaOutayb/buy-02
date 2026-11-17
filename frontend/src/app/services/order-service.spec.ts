@@ -6,6 +6,7 @@ import {
   Order,
   OrderPage,
   OrderService,
+  SellerSalesAnalytics,
   statusBadgeClass,
 } from './order-service';
 import { environment } from '../../environments/environment';
@@ -108,6 +109,22 @@ describe('OrderService', () => {
     const reqTest = httpTesting.expectOne(`${baseUrl}/seller?customer=cust1&page=1&size=10`);
     expect(reqTest.request.method).toBe('GET');
     reqTest.flush(mockPage);
+  });
+
+  it('should load seller sales analytics', () => {
+    const analytics: SellerSalesAnalytics = {
+      totalOrders: 4,
+      pendingOrders: 1,
+      completedOrders: 2,
+      unitsSold: 5,
+      revenue: 125,
+    };
+
+    service.getSellerAnalytics().subscribe((result) => expect(result).toEqual(analytics));
+
+    const reqTest = httpTesting.expectOne(`${baseUrl}/seller/analytics`);
+    expect(reqTest.request.method).toBe('GET');
+    reqTest.flush(analytics);
   });
 
   it('should confirm seller order via POST', () => {
