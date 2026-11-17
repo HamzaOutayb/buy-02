@@ -18,6 +18,7 @@ export interface OrderItemReq {
 export interface CreateOrderReq {
   items: OrderItemReq[];
   deliveryAddress: DeliveryAddress;
+  paymentMethod: PaymentMethod;
 }
 
 export interface OrderItem {

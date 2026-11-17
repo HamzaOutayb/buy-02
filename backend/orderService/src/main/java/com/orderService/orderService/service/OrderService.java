@@ -100,7 +100,7 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING);
         order.setItems(items);
         order.setDeliveryAddress(deliveryAddress);
-        order.setPaymentMethod(PaymentMethod.CASH_ON_DELIVERY);
+        order.setPaymentMethod(req.paymentMethod());
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setSubtotal(subtotal);
         order.setShippingFee(shippingFee);

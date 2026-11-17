@@ -9,7 +9,6 @@ import {
   ProductRequest,
   ProductService,
 } from '../../services/product-service';
-import { OrderService, SellerSalesAnalytics } from '../../services/order-service';
 
 interface ImagePreview {
   file: File;
@@ -31,13 +30,10 @@ export class Dashboard implements OnDestroy, OnInit {
   private readonly mediaService = inject(MediaService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly productService = inject(ProductService);
-  private readonly orderService = inject(OrderService);
 
   @ViewChild('productImagesInput') private productImagesInput?: ElementRef<HTMLInputElement>;
 
   readonly products = signal<Product[]>([]);
-  readonly analytics = signal<SellerSalesAnalytics | null>(null);
-  readonly analyticsError = signal('');
   readonly selectedFiles = signal<File[]>([]);
   readonly imagePreviews = signal<ImagePreview[]>([]);
   readonly existingImageUrls = signal<string[]>([]);
@@ -58,10 +54,6 @@ export class Dashboard implements OnDestroy, OnInit {
 
   ngOnInit(): void {
     this.loadProducts();
-    this.orderService.getSellerAnalytics().subscribe({
-      next: (analytics) => this.analytics.set(analytics),
-      error: () => this.analyticsError.set('Sales analytics could not be loaded.'),
-    });
   }
 
   ngOnDestroy(): void {

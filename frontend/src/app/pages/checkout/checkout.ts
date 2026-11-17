@@ -3,7 +3,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../services/cart-service';
-import { CreateOrderReq, Order, OrderService } from '../../services/order-service';
+import { CreateOrderReq, Order, OrderService, PaymentMethod } from '../../services/order-service';
 
 @Component({
   selector: 'app-checkout',
@@ -19,6 +19,7 @@ export class Checkout implements OnInit {
 
   readonly items = this.cartService.items;
   readonly subtotal = this.cartService.subtotal;
+  readonly paymentMethod = signal<PaymentMethod | null>(null);
 
   readonly isLoadingCart = signal(true);
   readonly cartLoadError = signal('');
@@ -54,6 +55,11 @@ export class Checkout implements OnInit {
       this.addressForm.markAllAsTouched();
       return;
     }
+    if (!this.paymentMethod()) {
+      this.errorMessage.set('Select a payment method before continuing.');
+      return;
+    }
+    this.errorMessage.set('');
     this.step.set(2);
   }
 
@@ -67,6 +73,12 @@ export class Checkout implements OnInit {
       this.errorMessage.set('Your saved cart is empty or unavailable. Please return to your cart.');
       return;
     }
+    const paymentMethod = this.paymentMethod();
+    if (!paymentMethod) {
+      this.errorMessage.set('Select a payment method before placing your order.');
+      this.step.set(1);
+      return;
+    }
 
     const values = this.addressForm.getRawValue();
     const req: CreateOrderReq = {
@@ -77,6 +89,7 @@ export class Checkout implements OnInit {
         city: values.city,
         fullAddress: values.fullAddress,
       },
+      paymentMethod,
     };
 
     this.isSubmitting.set(true);

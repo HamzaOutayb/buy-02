@@ -37,6 +37,7 @@ describe('OrderService', () => {
         city: 'City',
         fullAddress: 'Address 1',
       },
+      paymentMethod: 'CASH_ON_DELIVERY',
     };
     const mockOrder = { id: 'o1', orderReference: 'ORD-123' } as Order;
 

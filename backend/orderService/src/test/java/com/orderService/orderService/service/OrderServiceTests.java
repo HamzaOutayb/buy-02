@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -75,7 +76,8 @@ public class OrderServiceTests {
 
         CreateOrderReq req = new CreateOrderReq(
             List.of(new CreateOrderReq.OrderItemReq("product-1", 2)),
-            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St")
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
         );
 
         OrderRes result = orderService.createOrder(req, authentication);
@@ -83,7 +85,10 @@ public class OrderServiceTests {
         assertNotNull(result);
         assertEquals("ORD-1", result.orderReference());
         assertEquals(OrderStatus.PENDING, result.status());
-        verify(orderRepository).save(any(Order.class));
+        assertEquals(PaymentMethod.CASH_ON_DELIVERY, result.paymentMethod());
+        ArgumentCaptor<Order> savedOrder = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(savedOrder.capture());
+        assertEquals(PaymentMethod.CASH_ON_DELIVERY, savedOrder.getValue().getPaymentMethod());
     }
 
     @Test
@@ -94,7 +99,8 @@ public class OrderServiceTests {
 
         CreateOrderReq req = new CreateOrderReq(
             List.of(new CreateOrderReq.OrderItemReq("product-1", 5)),
-            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St")
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
         );
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
@@ -112,7 +118,8 @@ public class OrderServiceTests {
 
         CreateOrderReq req = new CreateOrderReq(
             List.of(new CreateOrderReq.OrderItemReq("missing-product", 1)),
-            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St")
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
         );
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,

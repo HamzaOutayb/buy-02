@@ -8,6 +8,29 @@
       </p>
     </div>
 
+    @if (user()?.role === 'SELLER') {
+      <section class="mb-10" aria-labelledby="seller-analytics-title">
+        <div class="mb-4">
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-teal-700">Seller overview</p>
+          <h2 id="seller-analytics-title" class="mt-1 text-xl font-bold text-slate-950">Sales & revenue</h2>
+        </div>
+        @if (analyticsError()) {
+          <p class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{{ analyticsError() }}</p>
+        } @else if (isLoadingAnalytics()) {
+          <p class="rounded-xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600" role="status">Loading sales analytics...</p>
+        } @else if (analytics(); as stats) {
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <article class="rounded-xl border border-slate-200 bg-white p-5"><p class="text-xs font-bold uppercase text-slate-500">Total orders</p><p class="mt-2 text-2xl font-black text-slate-950">{{ stats.totalOrders }}</p></article>
+            <article class="rounded-xl border border-slate-200 bg-white p-5"><p class="text-xs font-bold uppercase text-slate-500">Pending</p><p class="mt-2 text-2xl font-black text-amber-700">{{ stats.pendingOrders }}</p></article>
+            <article class="rounded-xl border border-slate-200 bg-white p-5"><p class="text-xs font-bold uppercase text-slate-500">Delivered orders</p><p class="mt-2 text-2xl font-black text-teal-800">{{ stats.completedOrders }}</p></article>
+            <article class="rounded-xl border border-slate-200 bg-white p-5"><p class="text-xs font-bold uppercase text-slate-500">Units sold</p><p class="mt-2 text-2xl font-black text-slate-950">{{ stats.unitsSold }}</p></article>
+            <article class="rounded-xl border border-slate-200 bg-white p-5"><p class="text-xs font-bold uppercase text-slate-500">Delivered revenue</p><p class="mt-2 text-2xl font-black text-teal-800">{{ stats.revenue | number:'1.2-2' }}</p></article>
+          </div>
+          <p class="mt-2 text-xs text-slate-500">Revenue and units sold include delivered items only.</p>
+        }
+      </section>
+    }
+
     @if (errorMessage()) { <p class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
       role="alert">{{ errorMessage() }}</p> }
     @if (successMessage()) { <p
