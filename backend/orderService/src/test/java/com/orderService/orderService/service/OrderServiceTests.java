@@ -130,6 +130,41 @@ public class OrderServiceTests {
     }
 
     @Test
+    void testCreateOrder_emptyItems() {
+        CreateOrderReq req = new CreateOrderReq(
+            List.of(),
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
+        );
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.createOrder(req, authentication));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(productClient, never()).getProduct(any());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrder_productOutOfStock() {
+        when(authentication.getName()).thenReturn("customer-1");
+        when(productClient.getProduct("product-1"))
+                .thenReturn(new ProductInfo("product-1", "Test Product", 100.0, 0, "seller-1", new String[0]));
+
+        CreateOrderReq req = new CreateOrderReq(
+            List.of(new CreateOrderReq.OrderItemReq("product-1", 1)),
+            new CreateOrderReq.DeliveryAddressReq("John", "0600000000", "Rabat", "123 Main St"),
+            PaymentMethod.CASH_ON_DELIVERY
+        );
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.createOrder(req, authentication));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
     void testCancelOrder_success() {
         Order order = order("order-1", "customer-1", OrderStatus.PENDING);
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
@@ -158,6 +193,27 @@ public class OrderServiceTests {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> orderService.cancelMyOrder("order-1", "other-customer"));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void testGetMyOrderById_missingOrder() {
+        when(orderRepository.findById("missing")).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.getMyOrderById("missing", "customer-1"));
+
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    void testGetMyOrderById_forbiddenForAnotherCustomer() {
+        when(orderRepository.findById("order-1"))
+                .thenReturn(Optional.of(order("order-1", "customer-1", OrderStatus.PENDING)));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.getMyOrderById("order-1", "customer-2"));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
@@ -291,6 +347,19 @@ public class OrderServiceTests {
     }
 
     @Test
+    void testSellerUpdateStatus_deliveredMarksPaymentAsPaid() {
+        Order order = order("order-1", "customer-1", OrderStatus.SHIPPED);
+        order.setItems(List.of(item("product-1", "seller-1")));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        OrderRes result = orderService.updateSellerOrderStatus("order-1", "seller-1", OrderStatus.DELIVERED);
+
+        assertEquals(OrderStatus.DELIVERED, result.status());
+        assertEquals(PaymentStatus.PAID, order.getPaymentStatus());
+    }
+
+    @Test
     void testSellerUpdateStatus_invalidTransition() {
         Order order = order("order-1", "customer-1", OrderStatus.PENDING);
         order.setItems(List.of(item("product-1", "seller-1")));
@@ -339,6 +408,19 @@ public class OrderServiceTests {
         orderService.cancelSellerOrder("order-1", "seller-1");
 
         verify(kafkaTemplate, never()).send(eq("inventory-events"), any(String.class), any(Object.class));
+    }
+
+    @Test
+    void testCancelSellerOrder_rejectsProcessingOrder() {
+        Order order = order("order-1", "customer-1", OrderStatus.PROCESSING);
+        order.setItems(List.of(item("product-1", "seller-1")));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.cancelSellerOrder("order-1", "seller-1"));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(orderRepository, never()).save(any());
     }
 
     @Test
