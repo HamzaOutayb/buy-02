@@ -29,6 +29,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.orderService.orderService.dto.BuyerAnalyticsRes;
 import com.orderService.orderService.dto.CreateOrderReq;
 import com.orderService.orderService.dto.OrderRes;
 import com.orderService.orderService.dto.OrderSummaryRes;
@@ -195,6 +196,34 @@ public class OrderServiceTests {
         assertEquals(1, result.getTotalElements());
         assertEquals("ORD-1", result.getContent().get(0).orderReference());
     }
+
+        @Test
+        void testGetBuyerAnalytics_excludesCancelledOrdersAndRanksProducts() {
+        Order firstOrder = order("order-1", "customer-1", OrderStatus.DELIVERED);
+        firstOrder.setTotal(250.0);
+        firstOrder.setItems(List.of(
+            new OrderItem("product-1", "seller-1", "Product 1", "", 100.0, 2, 200.0),
+            new OrderItem("product-2", "seller-1", "Product 2", "", 50.0, 1, 50.0)));
+        Order secondOrder = order("order-2", "customer-1", OrderStatus.CONFIRMED);
+        secondOrder.setTotal(100.0);
+        secondOrder.setItems(List.of(
+            new OrderItem("product-1", "seller-1", "Product 1", "", 100.0, 1, 100.0)));
+        Order cancelledOrder = order("order-3", "customer-1", OrderStatus.CANCELLED);
+        cancelledOrder.setTotal(999.0);
+        cancelledOrder.setItems(List.of(
+            new OrderItem("product-3", "seller-1", "Cancelled Product", "", 999.0, 1, 999.0)));
+        when(mongoTemplate.find(any(Query.class), eq(Order.class)))
+            .thenReturn(List.of(firstOrder, secondOrder, cancelledOrder));
+
+        BuyerAnalyticsRes result = orderService.getBuyerAnalytics("customer-1");
+
+        assertEquals(350.0, result.totalSpent());
+        assertEquals(2, result.mostBoughtProducts().size());
+        assertEquals("product-1", result.mostBoughtProducts().get(0).productId());
+        assertEquals(3, result.mostBoughtProducts().get(0).quantity());
+        assertEquals(300.0, result.mostBoughtProducts().get(0).spent());
+        assertEquals("product-2", result.mostBoughtProducts().get(1).productId());
+        }
 
     @Test
     void testGetSellerAnalytics_countsOnlyDeliveredSellerItemsAsSales() {

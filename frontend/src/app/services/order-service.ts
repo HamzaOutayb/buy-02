@@ -76,6 +76,18 @@ export interface SellerSalesAnalytics {
   revenue: number;
 }
 
+export interface BuyerProductAnalytics {
+  productId: string;
+  productName: string;
+  quantity: number;
+  spent: number;
+}
+
+export interface BuyerAnalytics {
+  totalSpent: number;
+  mostBoughtProducts: BuyerProductAnalytics[];
+}
+
 export interface OrderPage {
   content: OrderSummary[];
   totalElements: number;
@@ -130,6 +142,10 @@ export class OrderService {
     if (params.page !== undefined) p = p.set('page', params.page);
     if (params.size !== undefined) p = p.set('size', params.size);
     return this.http.get<OrderPage>(this.apiUrl, { params: p });
+  }
+
+  getBuyerAnalytics(): Observable<BuyerAnalytics> {
+    return this.http.get<BuyerAnalytics>(`${this.apiUrl}/analytics`);
   }
 
   getOrderById(id: string): Observable<Order> {

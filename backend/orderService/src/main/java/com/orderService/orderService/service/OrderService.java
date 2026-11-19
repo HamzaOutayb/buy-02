@@ -2,7 +2,10 @@ package com.orderService.orderService.service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.HashMap;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -23,6 +26,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.orderService.orderService.config.OrderTopic;
 import com.orderService.orderService.dto.CreateOrderReq;
+import com.orderService.orderService.dto.BuyerAnalyticsRes;
+import com.orderService.orderService.dto.BuyerProductAnalyticsRes;
 import com.orderService.orderService.dto.DeliveryAddressRes;
 import com.orderService.orderService.dto.OrderItemRes;
 import com.orderService.orderService.dto.OrderRes;
@@ -137,6 +142,44 @@ public class OrderService {
         long total = mongoTemplate.count(new Query(criteria), Order.class);
         List<Order> orders = mongoTemplate.find(query, Order.class);
         return new PageImpl<>(orders, sortedPageable, total).map(this::toSummaryRes);
+    }
+
+    public BuyerAnalyticsRes getBuyerAnalytics(String customerId) {
+        Query query = Query.query(Criteria.where("customerId").is(customerId)
+                .and("status").ne(OrderStatus.CANCELLED));
+        List<Order> orders = mongoTemplate.find(query, Order.class);
+        Map<String, BuyerProductTotals> productTotals = new HashMap<>();
+        double totalSpent = 0.0;
+
+        for (Order order : orders) {
+            if (order.getStatus() == OrderStatus.CANCELLED) {
+                continue;
+            }
+            totalSpent += order.getTotal() != null ? order.getTotal() : 0.0;
+            if (order.getItems() == null) {
+                continue;
+            }
+            for (OrderItem item : order.getItems()) {
+                if (item.getProductId() == null) {
+                    continue;
+                }
+                BuyerProductTotals totals = productTotals.computeIfAbsent(item.getProductId(),
+                        ignored -> new BuyerProductTotals(item.getProductName()));
+                totals.quantity += item.getQuantity() == null ? 0 : item.getQuantity();
+                totals.spent += item.getSubtotal() == null ? 0.0 : item.getSubtotal();
+            }
+        }
+
+        List<BuyerProductAnalyticsRes> mostBoughtProducts = productTotals.entrySet().stream()
+            .sorted(Map.Entry.<String, BuyerProductTotals>comparingByValue(
+                Comparator.comparingLong((BuyerProductTotals totals) -> totals.quantity)
+                    .reversed()
+                    .thenComparing(Comparator.comparingDouble(
+                        (BuyerProductTotals totals) -> totals.spent).reversed())))
+                .map(entry -> new BuyerProductAnalyticsRes(entry.getKey(), entry.getValue().productName,
+                        entry.getValue().quantity, entry.getValue().spent))
+                .toList();
+        return new BuyerAnalyticsRes(totalSpent, mostBoughtProducts);
     }
 
     public OrderRes getMyOrderById(String orderId, String customerId) {
@@ -408,6 +451,16 @@ public class OrderService {
 
     private String generateOrderReference() {
         return "ORD-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
+    }
+
+    private static class BuyerProductTotals {
+        private final String productName;
+        private long quantity;
+        private double spent;
+
+        private BuyerProductTotals(String productName) {
+            this.productName = productName;
+        }
     }
 
     private OrderRes toOrderRes(Order order) {

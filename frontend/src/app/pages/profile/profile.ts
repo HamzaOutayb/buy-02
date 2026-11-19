@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { MediaService } from '../../services/media-service';
-import { OrderService, SellerSalesAnalytics } from '../../services/order-service';
+import { BuyerAnalytics, OrderService, SellerSalesAnalytics } from '../../services/order-service';
 import { UserContextService } from '../../services/user-context-service';
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
@@ -29,6 +29,9 @@ export class Profile implements OnInit {
   readonly analytics = signal<SellerSalesAnalytics | null>(null);
   readonly analyticsError = signal('');
   readonly isLoadingAnalytics = signal(false);
+  readonly buyerAnalytics = signal<BuyerAnalytics | null>(null);
+  readonly buyerAnalyticsError = signal('');
+  readonly isLoadingBuyerAnalytics = signal(false);
   readonly selectedFile = signal<File | null>(null);
   readonly previewUrl = signal<string | null>(null);
   readonly isSubmitting = signal(false);
@@ -58,6 +61,7 @@ export class Profile implements OnInit {
     }
     this.userContext.load().subscribe(() => {
       if (this.user()?.role === 'SELLER') this.loadSellerAnalytics();
+      if (this.user()?.role === 'CLIENT') this.loadBuyerAnalytics();
     });
   }
 
@@ -130,6 +134,20 @@ export class Profile implements OnInit {
       error: () => {
         this.analyticsError.set('Sales analytics could not be loaded.');
         this.isLoadingAnalytics.set(false);
+      },
+    });
+  }
+
+  private loadBuyerAnalytics(): void {
+    this.isLoadingBuyerAnalytics.set(true);
+    this.orderService.getBuyerAnalytics().subscribe({
+      next: (analytics) => {
+        this.buyerAnalytics.set(analytics);
+        this.isLoadingBuyerAnalytics.set(false);
+      },
+      error: () => {
+        this.buyerAnalyticsError.set('Purchase analytics could not be loaded.');
+        this.isLoadingBuyerAnalytics.set(false);
       },
     });
   }

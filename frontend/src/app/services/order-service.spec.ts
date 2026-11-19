@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import {
   CreateOrderReq,
+  BuyerAnalytics,
   Order,
   OrderPage,
   OrderService,
@@ -124,6 +125,19 @@ describe('OrderService', () => {
     service.getSellerAnalytics().subscribe((result) => expect(result).toEqual(analytics));
 
     const reqTest = httpTesting.expectOne(`${baseUrl}/seller/analytics`);
+    expect(reqTest.request.method).toBe('GET');
+    reqTest.flush(analytics);
+  });
+
+  it('should load buyer purchase analytics', () => {
+    const analytics: BuyerAnalytics = {
+      totalSpent: 250,
+      mostBoughtProducts: [{ productId: 'p1', productName: 'Chair', quantity: 2, spent: 250 }],
+    };
+
+    service.getBuyerAnalytics().subscribe((result) => expect(result).toEqual(analytics));
+
+    const reqTest = httpTesting.expectOne(`${baseUrl}/analytics`);
     expect(reqTest.request.method).toBe('GET');
     reqTest.flush(analytics);
   });
