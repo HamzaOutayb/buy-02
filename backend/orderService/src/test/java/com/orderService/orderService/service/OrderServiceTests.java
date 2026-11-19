@@ -220,6 +220,8 @@ public class OrderServiceTests {
         Order order = order("order-1", "customer-1", OrderStatus.PENDING);
         order.setItems(List.of(item("product-1", "seller-1")));
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(productClient.getProduct("product-1"))
+            .thenReturn(new ProductInfo("product-1", "Test Product", 100.0, 1, "seller-1", new String[0]));
         when(orderRepository.save(order)).thenReturn(order);
 
         OrderRes result = orderService.confirmOrder("order-1", "seller-1");
@@ -232,6 +234,10 @@ public class OrderServiceTests {
         Order order = order("order-1", "customer-1", OrderStatus.PENDING);
         order.setItems(List.of(item("product-1", "seller-1"), item("product-2", "seller-1")));
         when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(productClient.getProduct("product-1"))
+            .thenReturn(new ProductInfo("product-1", "Test Product", 100.0, 1, "seller-1", new String[0]));
+        when(productClient.getProduct("product-2"))
+            .thenReturn(new ProductInfo("product-2", "Test Product", 100.0, 1, "seller-1", new String[0]));
         when(orderRepository.save(order)).thenReturn(order);
 
         orderService.confirmOrder("order-1", "seller-1");
@@ -242,6 +248,22 @@ public class OrderServiceTests {
                 eventCaptor.getAllValues().stream().map(OrderItemEvent::productId).toList());
         assertEquals(List.of("DECREASE", "DECREASE"),
                 eventCaptor.getAllValues().stream().map(OrderItemEvent::operation).toList());
+    }
+
+    @Test
+    void testSellerConfirmOrder_cancelsWhenStockWasDrained() {
+        Order order = order("order-1", "customer-1", OrderStatus.PENDING);
+        order.setItems(List.of(item("product-1", "seller-1")));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+        when(productClient.getProduct("product-1"))
+                .thenReturn(new ProductInfo("product-1", "Test Product", 100.0, 0, "seller-1", new String[0]));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        OrderRes result = orderService.confirmOrder("order-1", "seller-1");
+
+        assertEquals(OrderStatus.CANCELLED, result.status());
+        verify(kafkaTemplate).send(eq("order-events"), eq("order-1"), any(Object.class));
+        verify(kafkaTemplate, never()).send(eq("inventory-events"), any(String.class), any(Object.class));
     }
 
     @Test

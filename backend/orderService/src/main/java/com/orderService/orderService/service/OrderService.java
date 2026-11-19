@@ -318,6 +318,18 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Order cannot be confirmed in its current status: " + order.getStatus());
         }
+        for (OrderItem item : order.getItems()) {
+            ProductInfo product = productClient.getProduct(item.getProductId());
+            int availableQuantity = product.quantity() == null ? 0 : product.quantity();
+            int orderedQuantity = item.getQuantity() == null ? 0 : item.getQuantity();
+            if (availableQuantity < orderedQuantity) {
+                order.setStatus(OrderStatus.CANCELLED);
+                order.setUpdatedAt(Instant.now());
+                Order cancelled = orderRepository.save(order);
+                publishEvent("ORDER_CANCELLED", cancelled);
+                return toOrderRes(cancelled);
+            }
+        }
         order.setStatus(OrderStatus.CONFIRMED);
         order.setUpdatedAt(Instant.now());
         Order saved = orderRepository.save(order);
