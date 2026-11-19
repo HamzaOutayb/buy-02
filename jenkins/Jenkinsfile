@@ -44,7 +44,7 @@ pipeline {
                     : "${SERVER_SSL_KEY_STORE_PASSWORD:?Set SERVER_SSL_KEY_STORE_PASSWORD in jenkins/.env}"
                     export SPRING_KAFKA_LISTENER_AUTO_STARTUP=false
 
-                    for service in server gateway userService productService mediaService; do
+                    for service in server gateway userService productService mediaService orderService; do
                         echo "Testing backend/${service} and generating JaCoCo coverage"
                         (cd "backend/${service}" && ./mvnw -B -ntp clean test jacoco:report)
                     done
