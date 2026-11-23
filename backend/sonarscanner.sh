@@ -17,14 +17,37 @@ fi
 
 sonar_host_url="${SONAR_HOST_URL:-http://localhost:9090}"
 
-for service in gateway userService productService mediaService server; do
-  echo "Scanning $service..."
+for service in gateway userService productService mediaService server orderService; do
+  echo "========================================"
+  echo "Building and scanning $service..."
+  echo "========================================"
+
   (
     cd "$backend_dir/$service"
-    ./mvnw -B -ntp org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+
+    # Run tests and generate JaCoCo coverage
+    ./mvnw -B -ntp clean verify
+
+    # Verify JaCoCo report exists
+    jacoco_report="target/site/jacoco/jacoco.xml"
+
+    if [[ ! -f "$jacoco_report" ]]; then
+      echo "ERROR: JaCoCo report not found for $service" >&2
+      exit 1
+    fi
+
+    echo "JaCoCo report found: $jacoco_report"
+
+    # Run SonarQube analysis
+    ./mvnw -B -ntp \
+      org.sonarsource.scanner.maven:sonar-maven-plugin:5.9.0.7382:sonar \
       -Dsonar.projectKey="buy-02-$service" \
       -Dsonar.projectName="buy-02-$service" \
       -Dsonar.host.url="$sonar_host_url" \
-      -Dsonar.token="$SONAR_TOKEN"
+      -Dsonar.token="$SONAR_TOKEN" \
+      -Dsonar.coverage.jacoco.xmlReportPaths="$jacoco_report"
   )
+
 done
+
+echo "All services successfully scanned!"
