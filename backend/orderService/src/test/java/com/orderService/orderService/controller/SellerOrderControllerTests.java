@@ -21,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import com.orderService.orderService.dto.DeliveryAddressRes;
 import com.orderService.orderService.dto.OrderRes;
 import com.orderService.orderService.dto.OrderSummaryRes;
+import com.orderService.orderService.dto.SellerSalesAnalyticsRes;
 import com.orderService.orderService.dto.UpdateStatusReq;
 import com.orderService.orderService.enums.OrderStatus;
 import com.orderService.orderService.enums.PaymentMethod;
@@ -38,6 +39,18 @@ class SellerOrderControllerTests {
 
     @InjectMocks
     private SellerOrderController controller;
+
+    @Test
+    void getSellerAnalytics_delegatesToService() {
+        when(authentication.getName()).thenReturn("seller-1");
+        SellerSalesAnalyticsRes expected = new SellerSalesAnalyticsRes(10, 5, 5, 20, 200.0);
+        when(orderService.getSellerAnalytics("seller-1")).thenReturn(expected);
+
+        SellerSalesAnalyticsRes res = controller.getSellerAnalytics(authentication);
+
+        assertEquals(expected, res);
+        verify(orderService).getSellerAnalytics("seller-1");
+    }
 
     @Test
     void getSellerOrders_delegatesToService() {

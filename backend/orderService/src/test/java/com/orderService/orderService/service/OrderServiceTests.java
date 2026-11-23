@@ -467,6 +467,163 @@ public class OrderServiceTests {
         assertEquals(100.0, result.total());
     }
 
+    @Test
+    void testGetSellerOrderById_noItemsForSeller_throwsForbidden() {
+        Order order = order("order-1", "customer-1", OrderStatus.CONFIRMED);
+        order.setItems(List.of(item("product-1", "other-seller")));
+        when(orderRepository.findById("order-1")).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.getSellerOrderById("order-1", "seller-1"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void testGetMyOrders_withFiltersAndSorting() {
+        Instant from = Instant.now().minusSeconds(3600);
+        Instant to = Instant.now();
+        Order order = order("o1", "c1", OrderStatus.PENDING);
+
+        when(mongoTemplate.count(any(Query.class), eq(Order.class))).thenReturn(1L);
+        when(mongoTemplate.find(any(Query.class), eq(Order.class))).thenReturn(List.of(order));
+
+        // Test with status, orderRef, from and to
+        Page<OrderSummaryRes> res = orderService.getMyOrders("c1", OrderStatus.PENDING, from, to, "ORD", PageRequest.of(0, 10));
+        assertEquals(1, res.getTotalElements());
+
+        // Test with from only
+        orderService.getMyOrders("c1", null, from, null, null, PageRequest.of(0, 10));
+
+        // Test with to only
+        orderService.getMyOrders("c1", null, null, to, null, PageRequest.of(0, 10));
+    }
+
+    @Test
+    void testGetSellerOrders_withFilters() {
+        Instant from = Instant.now().minusSeconds(3600);
+        Instant to = Instant.now();
+        Order order = order("o1", "c1", OrderStatus.CONFIRMED);
+        order.setItems(List.of(item("p1", "s1")));
+
+        when(mongoTemplate.count(any(Query.class), eq(Order.class))).thenReturn(1L);
+        when(mongoTemplate.find(any(Query.class), eq(Order.class))).thenReturn(List.of(order));
+
+        // Test with customer, ref, status, from and to
+        Page<OrderSummaryRes> res = orderService.getSellerOrders("s1", "c1", "ORD", OrderStatus.CONFIRMED, from, to, PageRequest.of(0, 10));
+        assertEquals(1, res.getTotalElements());
+
+        // Test with from only
+        orderService.getSellerOrders("s1", null, null, null, from, null, PageRequest.of(0, 10));
+
+        // Test with to only
+        orderService.getSellerOrders("s1", null, null, null, null, to, PageRequest.of(0, 10));
+    }
+
+    @Test
+    void testGetMyOrderById_successAndForbidden() {
+        Order order = order("o1", "c1", OrderStatus.PENDING);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+
+        OrderRes res = orderService.getMyOrderById("o1", "c1");
+        assertNotNull(res);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.getMyOrderById("o1", "other-customer"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void testReorder_forbidden() {
+        Order order = order("o1", "c1", OrderStatus.PENDING);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.reorder("o1", "other-customer"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void testReorder_outOfStock() {
+        Order order = order("o1", "c1", OrderStatus.PENDING);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+        when(productClient.getProduct("p1")).thenReturn(new ProductInfo("p1", "P1", 10.0, 0, "s1", new String[]{}));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.reorder("o1", "c1"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testReorder_insufficientStock() {
+        Order order = order("o1", "c1", OrderStatus.PENDING);
+        order.getItems().get(0).setQuantity(10);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+        when(productClient.getProduct("p1")).thenReturn(new ProductInfo("p1", "P1", 10.0, 5, "s1", new String[]{}));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.reorder("o1", "c1"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void testConfirmOrder_nonPending_throwsConflict() {
+        Order order = order("o1", "c1", OrderStatus.CONFIRMED);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.confirmOrder("o1", "s1"));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void testUpdateSellerOrderStatus_forbidden() {
+        Order order = order("o1", "c1", OrderStatus.CONFIRMED);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.updateSellerOrderStatus("o1", "other-seller", OrderStatus.PROCESSING));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void testCancelSellerOrder_forbidden() {
+        Order order = order("o1", "c1", OrderStatus.CONFIRMED);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> orderService.cancelSellerOrder("o1", "other-seller"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void testPublishEvent_exceptionHandledGracefully() {
+        Order order = order("o1", "c1", OrderStatus.PENDING);
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenReturn(order);
+        when(kafkaTemplate.send(any(), any(), any())).thenThrow(new RuntimeException("Kafka down"));
+
+        OrderRes res = orderService.cancelMyOrder("o1", "c1");
+        assertNotNull(res);
+        assertEquals(OrderStatus.CANCELLED, res.status());
+    }
+
+    @Test
+    void testGetBuyerAnalytics_withCancelledAndNullItems() {
+        Order normal = order("o1", "c1", OrderStatus.DELIVERED);
+        Order cancelled = order("o2", "c1", OrderStatus.CANCELLED);
+        Order nullItems = order("o3", "c1", OrderStatus.DELIVERED);
+        nullItems.setItems(null);
+        Order nullProductId = order("o4", "c1", OrderStatus.DELIVERED);
+        nullProductId.setItems(List.of(new OrderItem(null, "s1", "Null Prod", null, 10.0, 1, 10.0)));
+
+        when(mongoTemplate.find(any(Query.class), eq(Order.class)))
+                .thenReturn(List.of(normal, cancelled, nullItems, nullProductId));
+
+        BuyerAnalyticsRes res = orderService.getBuyerAnalytics("c1");
+        assertNotNull(res);
+        assertEquals(300.0, res.totalSpent());
+    }
+
     // Helpers
     private Order order(String id, String customerId, OrderStatus status) {
         Order o = new Order();
