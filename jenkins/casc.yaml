@@ -63,6 +63,7 @@ jobs:
       multibranchPipelineJob('buy-01') {
         description('Buy-01 CI pipeline.')
 
+
         branchSources {
           branchSource {
             source {
