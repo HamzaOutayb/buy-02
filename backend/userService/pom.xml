@@ -31,6 +31,17 @@
 		<java.version>17</java.version>
 		<spring-cloud.version>2025.1.3</spring-cloud.version>
 	</properties>
+	<distributionManagement>
+		<repository>
+			<id>nexus-releases</id>
+			<url>http://localhost:8099/repository/maven-releases/</url>
+		</repository>
+
+		<snapshotRepository>
+			<id>nexus-snapshots</id>
+			<url>http://localhost:8099/repository/maven-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
